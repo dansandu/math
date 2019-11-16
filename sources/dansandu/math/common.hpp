@@ -38,6 +38,20 @@ struct divide {
     }
 };
 
+struct power {
+    template<typename Base, typename Exponent>
+    constexpr auto operator()(Base&& base, Exponent&& exponent) const {
+        return std::pow(std::forward<Base>(base), std::forward<Exponent>(exponent));
+    }
+};
+
+struct log {
+    template<typename Base, typename Value>
+    constexpr auto operator()(Base&& base, Value&& value) const {
+        return std::log(std::forward<Value>(value)) / std::log(std::forward<Base>(base));
+    }
+};
+
 template<typename Scalar>
 struct multiplyBy {
     multiplyBy(Scalar scalar) : scalar_{std::move(scalar)} {}
