@@ -4,46 +4,77 @@
 #include <type_traits>
 #include <utility>
 
-namespace dansandu::math::common {
+namespace dansandu::math::common
+{
 
 using size_type = int;
 
 constexpr auto dynamic = -1;
 
-struct add {
+struct add
+{
     template<typename A, typename B>
-    constexpr auto operator()(A&& a, B&& b) const {
+    constexpr auto operator()(A&& a, B&& b) const
+    {
         return std::forward<A>(a) + std::forward<B>(b);
     }
 };
 
-struct subtract {
+struct subtract
+{
     template<typename A, typename B>
-    constexpr auto operator()(A&& a, B&& b) const {
+    constexpr auto operator()(A&& a, B&& b) const
+    {
         return std::forward<A>(a) - std::forward<B>(b);
     }
 };
 
-struct multiply {
+struct multiply
+{
     template<typename A, typename B>
-    constexpr auto operator()(A&& a, B&& b) const {
+    constexpr auto operator()(A&& a, B&& b) const
+    {
         return std::forward<A>(a) * std::forward<B>(b);
     }
 };
 
-struct divide {
+struct divide
+{
     template<typename A, typename B>
-    constexpr auto operator()(A&& a, B&& b) const {
+    constexpr auto operator()(A&& a, B&& b) const
+    {
         return std::forward<A>(a) / std::forward<B>(b);
     }
 };
 
+struct power
+{
+    template<typename Base, typename Exponent>
+    constexpr auto operator()(Base&& base, Exponent&& exponent) const
+    {
+        return std::pow(std::forward<Base>(base), std::forward<Exponent>(exponent));
+    }
+};
+
+struct log
+{
+    template<typename Base, typename Value>
+    constexpr auto operator()(Base&& base, Value&& value) const
+    {
+        return std::log(std::forward<Value>(value)) / std::log(std::forward<Base>(base));
+    }
+};
+
 template<typename Scalar>
-struct multiplyBy {
-    multiplyBy(Scalar scalar) : scalar_{std::move(scalar)} {}
+struct multiplyBy
+{
+    multiplyBy(Scalar scalar) : scalar_{std::move(scalar)}
+    {
+    }
 
     template<typename Element>
-    constexpr auto operator()(Element&& element) const {
+    constexpr auto operator()(Element&& element) const
+    {
         return std::forward<Element>(element) * scalar_;
     }
 
@@ -52,11 +83,15 @@ private:
 };
 
 template<typename Scalar>
-struct divideBy {
-    divideBy(Scalar scalar) : scalar_{std::move(scalar)} {}
+struct divideBy
+{
+    divideBy(Scalar scalar) : scalar_{std::move(scalar)}
+    {
+    }
 
     template<typename Element>
-    constexpr auto operator()(Element&& element) const {
+    constexpr auto operator()(Element&& element) const
+    {
         return std::forward<Element>(element) / scalar_;
     }
 
@@ -65,29 +100,35 @@ private:
 };
 
 template<typename T>
-constexpr T get_pi() {
+constexpr T get_pi()
+{
     return static_cast<T>(3.141592653589793238462643383279502884197169399375105820974944592307816406286L);
 }
 
 template<typename T>
-struct numeric_traits {};
+struct numeric_traits
+{
+};
 
 template<>
-struct numeric_traits<int> {
+struct numeric_traits<int>
+{
     static constexpr int additive_identity = 0;
     static constexpr int multiplicative_identity = 1;
     static constexpr int pi = get_pi<int>();
 };
 
 template<>
-struct numeric_traits<float> {
+struct numeric_traits<float>
+{
     static constexpr float additive_identity = 0.0F;
     static constexpr float multiplicative_identity = 1.0F;
     static constexpr float pi = get_pi<float>();
 };
 
 template<>
-struct numeric_traits<double> {
+struct numeric_traits<double>
+{
     static constexpr double additive_identity = 0.0;
     static constexpr double multiplicative_identity = 1.0;
     static constexpr double pi = get_pi<double>();
@@ -103,15 +144,22 @@ template<typename T>
 constexpr auto pi = numeric_traits<T>::pi;
 
 template<typename Type>
-class QuadraticEquation {
+class QuadraticEquation
+{
 public:
     using value_type = std::decay_t<Type>;
 
-    QuadraticEquation(value_type a, value_type b, value_type c) : a_{a}, b_{b}, delta_{b * b - 4 * a * c} {}
+    QuadraticEquation(value_type a, value_type b, value_type c) : a_{a}, b_{b}, delta_{b * b - 4 * a * c}
+    {
+    }
 
-    auto hasRealSolutions() const { return delta_ >= 0; }
+    auto hasRealSolutions() const
+    {
+        return delta_ >= 0;
+    }
 
-    auto getRoots() const {
+    auto getRoots() const
+    {
         auto deltaSquareRoot = std::sqrt(delta_);
         auto denominator = 2 * a_;
         return std::make_pair((-b_ - deltaSquareRoot) / denominator, (-b_ + deltaSquareRoot) / denominator);
