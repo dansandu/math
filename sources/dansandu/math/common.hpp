@@ -47,16 +47,20 @@ struct divide
     }
 };
 
-struct power {
+struct power
+{
     template<typename Base, typename Exponent>
-    constexpr auto operator()(Base&& base, Exponent&& exponent) const {
+    constexpr auto operator()(Base&& base, Exponent&& exponent) const
+    {
         return std::pow(std::forward<Base>(base), std::forward<Exponent>(exponent));
     }
 };
 
-struct log {
+struct log
+{
     template<typename Base, typename Value>
-    constexpr auto operator()(Base&& base, Value&& value) const {
+    constexpr auto operator()(Base&& base, Value&& value) const
+    {
         return std::log(std::forward<Value>(value)) / std::log(std::forward<Base>(base));
     }
 };
