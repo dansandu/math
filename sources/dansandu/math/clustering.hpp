@@ -1,16 +1,16 @@
 #pragma once
 
-#include "dansandu/ballotin/default_random_generator.hpp"
 #include "dansandu/ballotin/exception.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/matrix.hpp"
 #include "dansandu/range/range.hpp"
 
+#include <random>
+
 namespace dansandu::math::clustering
 {
 
-template<typename T, int N,
-         typename RandomGenerator = dansandu::ballotin::default_random_generator::DefaultRandomGenerator>
+template<typename T, int N>
 std::pair<std::vector<dansandu::math::matrix::Matrix<T, 1, N>>, std::vector<int>>
     kMeans(std::vector<dansandu::math::matrix::Matrix<T, 1, N>> samples, int clusterCount, int maximumIterations)
 {
@@ -18,7 +18,8 @@ std::pair<std::vector<dansandu::math::matrix::Matrix<T, 1, N>>, std::vector<int>
         THROW(std::invalid_argument, "invalid cluster count ", clusterCount, " -- cluster count must be positive");
 
     using namespace dansandu::range::range;
-    auto centroids = integers(0, 1, samples.size()) | shuffle<RandomGenerator>() | take(clusterCount) |
+    auto generator = std::minstd_rand{};
+    auto centroids = integers(0, 1, samples.size()) | shuffle(generator) | take(clusterCount) |
                      map([&samples](auto i) { return samples[i]; }) | toVector();
     auto labels = std::vector<int>(samples.size());
     auto newCentroids = centroids;
