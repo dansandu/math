@@ -17,10 +17,9 @@ TEST_CASE("Clustering")
         //           |      * *
         //           |    * *
         //           |
-        auto samples =
-            std::vector<Point>{{Point{{-3.0, 6.0}}, Point{{-7.0, 5.0}}, Point{{-8.0, 4.0}}, Point{{-7.0, 3.0}},
-                                Point{{-4.0, 2.0}}, Point{{5.0, 1.0}}, Point{{8.0, 0.0}}, Point{{7.0, -1.0}},
-                                Point{{9.0, -2.0}}, Point{{5.0, -4.0}}, Point{{6.0, -4.5}}}};
+        auto samples = std::vector<Point>{{Point{-3.0, 6.0}, Point{-7.0, 5.0}, Point{-8.0, 4.0}, Point{-7.0, 3.0},
+                                           Point{-4.0, 2.0}, Point{5.0, 1.0}, Point{8.0, 0.0}, Point{7.0, -1.0},
+                                           Point{9.0, -2.0}, Point{5.0, -4.0}, Point{6.0, -4.5}}};
         auto clusterCount = 2;
         auto maximumIterations = 10;
         auto precision = 1.0e-10;

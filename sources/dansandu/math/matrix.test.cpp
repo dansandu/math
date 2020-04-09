@@ -33,7 +33,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
     SECTION("1D array constructor")
     {
-        auto vector = Matrix<int, 1, 3>{{7, 11, 13}};
+        auto vector = Matrix<int, 1, 3>{7, 11, 13};
 
         REQUIRE(vector.rowCount() == 1);
 
@@ -82,7 +82,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
         auto x = 3;
         auto y = 5;
         auto z = 7;
-        auto matrix = Matrix<int, 3, 1>{{x, y, z}};
+        auto matrix = Matrix<int, 3, 1>{x, y, z};
 
         REQUIRE(matrix.x() == x);
 
@@ -108,7 +108,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
     SECTION("vector subscript")
     {
-        auto vector = Matrix<int, 3, 1>{{1, 3, 5}};
+        auto vector = Matrix<int, 3, 1>{1, 3, 5};
 
         REQUIRE(vector.x() == 1);
 
@@ -125,17 +125,17 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
     SECTION("binary matrix-matrix operations")
     {
-        auto a = Matrix<int, 3, 1>{{10, 15, 20}};
-        auto b = Matrix<int, 3, 1>{{1, 3, 5}};
+        auto a = Matrix<int, 3, 1>{10, 15, 20};
+        auto b = Matrix<int, 3, 1>{1, 3, 5};
 
         SECTION("addition")
         {
-            REQUIRE(a + b == Matrix<int, 3, 1>{{11, 18, 25}});
+            REQUIRE(a + b == Matrix<int, 3, 1>{11, 18, 25});
         }
 
         SECTION("subtraction")
         {
-            REQUIRE(a - b == Matrix<int, 3, 1>{{9, 12, 15}});
+            REQUIRE(a - b == Matrix<int, 3, 1>{9, 12, 15});
         }
 
         SECTION("dot product")
@@ -145,25 +145,25 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
         SECTION("cross product")
         {
-            REQUIRE(crossProduct(a, b) == Matrix<int, 3, 1>{{15, -30, 15}});
+            REQUIRE(crossProduct(a, b) == Matrix<int, 3, 1>{15, -30, 15});
         }
 
         SECTION("copy")
         {
             a = b;
 
-            REQUIRE(a == Matrix<int, 3, 1>{{1, 3, 5}});
+            REQUIRE(a == Matrix<int, 3, 1>{1, 3, 5});
 
-            REQUIRE(b == Matrix<int, 3, 1>{{1, 3, 5}});
+            REQUIRE(b == Matrix<int, 3, 1>{1, 3, 5});
         }
     }
 
     SECTION("matrix multiplication")
     {
-        auto a = Matrix<int, 1, 3>{{1, 5, 7}};
+        auto a = Matrix<int, 1, 3>{1, 5, 7};
         auto b = Matrix<int, 3, 2>{{{11, 13}, {17, 19}, {23, 29}}};
 
-        REQUIRE(a * b == Matrix<int, 1, 2>{{257, 311}});
+        REQUIRE(a * b == Matrix<int, 1, 2>{257, 311});
     }
 
     SECTION("binary scalar-matrix operations")
@@ -183,7 +183,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
     SECTION("magnitude")
     {
-        auto vector = Matrix<double, 3, 1>{{3.0, 4.0, 5.0}};
+        auto vector = Matrix<double, 3, 1>{3.0, 4.0, 5.0};
 
         REQUIRE(magnitude(vector) == Approx(7.071067f));
     }
@@ -191,16 +191,16 @@ TEST_CASE("dansandu::math::matrix::Matrix")
     SECTION("norm")
     {
         constexpr auto precision = 1e-5f;
-        auto vector = Matrix<double, 3, 1>{{3.0, 4.0, 5.0}};
-        auto expected = Matrix<double, 3, 1>{{0.424264, 0.565685, 0.707106}};
+        auto vector = Matrix<double, 3, 1>{3.0, 4.0, 5.0};
+        auto expected = Matrix<double, 3, 1>{0.424264, 0.565685, 0.707106};
 
         REQUIRE(close(normalized(vector), expected, precision));
     }
 
     SECTION("distance")
     {
-        auto a = Matrix<double, 3, 1>{{1.0, 2.0, 0.0}};
-        auto b = Matrix<double, 3, 1>{{2.0, 7.0, 5.0}};
+        auto a = Matrix<double, 3, 1>{1.0, 2.0, 0.0};
+        auto b = Matrix<double, 3, 1>{2.0, 7.0, 5.0};
 
         REQUIRE(distance(a, b) == Approx(7.1414));
     }

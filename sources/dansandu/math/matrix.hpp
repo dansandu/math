@@ -94,6 +94,23 @@ public:
             storage_.data = std::vector<value_type>(M * N, fillValue);
     }
 
+    template<typename... Arguments,
+             typename = std::enable_if_t<(M == 1 || N == 1) && M * N >= 2 && sizeof...(Arguments) == M * N &&
+                                         (std::is_same_v<std::decay_t<Arguments>, value_type> && ...)>>
+    explicit constexpr Matrix(Arguments&&... arguments)
+    {
+        if constexpr (storageStrategy == StorageStrategy::stack)
+        {
+            auto begin = storage_.data.begin();
+            (..., (*begin++ = std::forward<Arguments>(arguments)));
+        }
+        else
+        {
+            storage_.data.reserve(sizeof...(Arguments));
+            (..., (storage_.data.push_back(std::forward<Arguments>(arguments))));
+        }
+    }
+
     template<size_type length, typename T = value_type,
              typename = std::enable_if_t<(M == length && N == 1) || (M == 1 && N == length), T>>
     explicit constexpr Matrix(const value_type (&array)[length])
