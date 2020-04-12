@@ -96,7 +96,7 @@ public:
 
     template<typename... Arguments,
              typename = std::enable_if_t<(M == 1 || N == 1) && M * N >= 2 && sizeof...(Arguments) == M * N &&
-                                         (std::is_same_v<std::decay_t<Arguments>, value_type> && ...)>>
+                                         (std::is_convertible_v<std::decay_t<Arguments>, value_type> && ...)>>
     explicit constexpr Matrix(Arguments&&... arguments)
     {
         if constexpr (storageStrategy == StorageStrategy::stack)
