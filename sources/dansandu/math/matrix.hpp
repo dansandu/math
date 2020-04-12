@@ -125,9 +125,7 @@ public:
     explicit constexpr Matrix(const value_type (&array)[m][n])
     {
         if constexpr (storageStrategy == StorageStrategy::dynamic)
-        {
             storage_.data.reserve(M * N);
-        }
         for (auto row = 0; row < M; ++row)
             for (auto column = 0; column < N; ++column)
                 if constexpr (storageStrategy == StorageStrategy::stack)
@@ -314,8 +312,7 @@ auto normalized(const Matrix<Type, M, N>& matrix)
 template<typename Type, size_type M, size_type N, size_type P>
 auto operator*(const Matrix<Type, M, N>& a, const Matrix<Type, N, P>& b)
 {
-    auto result =
-        Matrix<Type, M, P>{dansandu::math::common::additive_identity<typename Matrix<Type, M, P>::value_type>};
+    auto result = Matrix<Type, M, P>{};
     for (auto m = 0; m < M; ++m)
         for (auto p = 0; p < P; ++p)
             for (auto n = 0; n < N; ++n)
