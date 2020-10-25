@@ -13,7 +13,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
     {
         SECTION("static x static matrix")
         {
-            SECTION("null matrix")
+            SECTION("null")
             {
                 auto matrix = Matrix<int, 0, 0>{};
 
@@ -92,7 +92,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             }
         }
 
-        SECTION("null dynamic x dynamic matrix")
+        SECTION("null dynamic x dynamic")
         {
             auto matrix = Matrix<int, dynamic, dynamic>{};
 
@@ -101,7 +101,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             REQUIRE(matrix.columnCount() == 0);
         }
 
-        SECTION("null static x dynamic matrix")
+        SECTION("null static x dynamic")
         {
             auto matrix = Matrix<int, 2, dynamic>{};
 
@@ -118,7 +118,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             REQUIRE_THROWS_AS(matrix.x(), std::out_of_range);
         }
 
-        SECTION("null dynamic x static matrix")
+        SECTION("null dynamic x static")
         {
             auto matrix = Matrix<int, dynamic, 1>{};
 
@@ -138,7 +138,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
     SECTION("vector initialization")
     {
-        SECTION("static vector")
+        SECTION("static")
         {
             auto vector = Matrix<int, 4, 1>{{11, 13, 17, 23}};
 
@@ -171,43 +171,228 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             REQUIRE(vector(2, 0) == 17);
 
             REQUIRE(vector(3, 0) == 23);
-
-            auto sameVector = Matrix<int, 4, 1>{{11, 13, 17, 23}};
-
-            REQUIRE(vector == sameVector);
-
-            auto otherVector = Matrix<int, 4, 1>{{11, 13, 17, 20}};
-
-            REQUIRE(vector != otherVector);
         }
     }
 
     SECTION("matrix initialization")
     {
-        auto matrix = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
+        SECTION("static")
+        {
+            auto matrix = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
 
-        REQUIRE(matrix.rowCount() == 2);
+            REQUIRE(matrix.rowCount() == 2);
 
-        REQUIRE(matrix.columnCount() == 3);
+            REQUIRE(matrix.columnCount() == 3);
 
-        REQUIRE(matrix(0, 0) == 1);
+            REQUIRE(matrix(0, 0) == 1);
 
-        REQUIRE(matrix(0, 1) == 2);
+            REQUIRE(matrix(0, 1) == 2);
 
-        REQUIRE(matrix(0, 2) == 3);
+            REQUIRE(matrix(0, 2) == 3);
 
-        REQUIRE(matrix(1, 0) == 11);
+            REQUIRE(matrix(1, 0) == 11);
 
-        REQUIRE(matrix(1, 1) == 12);
+            REQUIRE(matrix(1, 1) == 12);
 
-        REQUIRE(matrix(1, 2) == 13);
+            REQUIRE(matrix(1, 2) == 13);
+        }
 
-        auto sameMatrix = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
+        SECTION("dynamic")
+        {
+            auto matrix = Matrix<int, dynamic, dynamic>{{{1, 2}, {11, 12}, {21, 22}}};
 
-        REQUIRE(matrix == sameMatrix);
+            REQUIRE(matrix.rowCount() == 3);
 
-        auto otherMatrix = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 22, 13}}};
+            REQUIRE(matrix.columnCount() == 2);
 
-        REQUIRE(matrix != otherMatrix);
+            REQUIRE(matrix(0, 0) == 1);
+
+            REQUIRE(matrix(0, 1) == 2);
+
+            REQUIRE(matrix(1, 0) == 11);
+
+            REQUIRE(matrix(1, 1) == 12);
+
+            REQUIRE(matrix(2, 0) == 21);
+
+            REQUIRE(matrix(2, 1) == 22);
+        }
+    }
+
+    SECTION("equality")
+    {
+        SECTION("static with static")
+        {
+            auto a = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
+
+            auto b = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
+
+            auto c = Matrix<int, 2, 3>{{{1, 2, 3}, {11, -1, 13}}};
+
+            REQUIRE(a == b);
+
+            REQUIRE(a != c);
+        }
+
+        SECTION("mixed static with dynamic")
+        {
+            auto a = Matrix<int, 1, dynamic>{{3, 5, 7}};
+
+            auto b = Matrix<int, dynamic, 3>{{3, 5, 7}};
+
+            auto c = Matrix<int, dynamic, 3>{{{3, 5, 7}, {3, 5, 7}}};
+
+            REQUIRE(a == b);
+
+            REQUIRE(a != c);
+        }
+
+        SECTION("dynamic with dynamic")
+        {
+            auto a = Matrix<int, dynamic, dynamic>{{120, 105, 130, 150}};
+
+            auto b = Matrix<int, dynamic, dynamic>{{120, 105, 130, 150}};
+
+            auto c = Matrix<int, dynamic, dynamic>{{{120, 105}, {130, 150}}};
+
+            REQUIRE(a == b);
+
+            REQUIRE(a != c);
+        }
+    }
+
+    SECTION("implace addition")
+    {
+        SECTION("static with static")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, 2, 2>{{{-59, 35}, {3, 0}}};
+                auto b = Matrix<int, 2, 2>{{{9, 34}, {29, 2}}};
+                auto expected = Matrix<int, 2, 2>{{{-50, 69}, {32, 2}}};
+
+                a += b;
+
+                REQUIRE(a == expected);
+            }
+        }
+
+        SECTION("static with dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, 3, 1>{{10, 15, 20}};
+                auto b = Matrix<int, dynamic, dynamic>{{120, 105, 130}};
+                auto expected = Matrix<int, 3, 1>{{130, 120, 150}};
+
+                a += b;
+
+                REQUIRE(a == expected);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, 3, 1>{{10, 15, 20}};
+                auto b = Matrix<int, dynamic, dynamic>{{120, 105}};
+
+                REQUIRE_THROWS_AS(a += b, std::runtime_error);
+            }
+        }
+
+        SECTION("mixed static with dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, 1, dynamic>{{3, 5, 7}};
+                auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
+                auto expected = Matrix<int, 1, dynamic>{{13, 105, 1007}};
+
+                a += b;
+
+                REQUIRE(a == expected);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, 1, dynamic>{{3, 5}};
+                auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
+
+                REQUIRE_THROWS_AS(a += b, std::runtime_error);
+            }
+        }
+
+        SECTION("dynamic with dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
+                auto b = Matrix<int, dynamic, dynamic>{{30, 40}};
+                auto expected = Matrix<int, dynamic, dynamic>{{31, 42}};
+
+                a += b;
+
+                REQUIRE(a == expected);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
+                auto b = Matrix<int, dynamic, dynamic>{{30, 40, 50}};
+
+                REQUIRE_THROWS_AS(a += b, std::runtime_error);
+            }
+        }
+    }
+
+    SECTION("multiplication")
+    {
+        SECTION("static with static")
+        {
+            auto a = Matrix<int, 2, 3>{{{3, 5, 7}, {11, 13, 17}}};
+            auto b = Matrix<int, 3, 1>{{23, 29, 31}};
+            auto expected = Matrix<int, 2, 1>{{431, 1157}};
+
+            REQUIRE(a * b == expected);
+        }
+
+        SECTION("mixed static with dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, 2, dynamic>{{{3, 5, 7}, {11, 13, 17}}};
+                auto b = Matrix<int, 3, 1>{{23, 29, 31}};
+                auto expected = Matrix<int, 2, 1>{{431, 1157}};
+
+                REQUIRE(a * b == expected);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, 2, dynamic>{{{3, 5, 7, 7}, {11, 13, 17, 17}}};
+                auto b = Matrix<int, 3, 1>{{23, 29, 31}};
+
+                REQUIRE_THROWS_AS(a * b, std::runtime_error);
+            }
+        }
+
+        SECTION("dynamic with dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, dynamic, dynamic>{{{1, 2}, {3, 4}, {5, 6}}};
+                auto b = Matrix<int, dynamic, dynamic>{{3, 5}};
+                auto expected = Matrix<int, dynamic, dynamic>{{13, 29, 45}};
+
+                REQUIRE(a * b == expected);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, 1, dynamic>{{3, 5}};
+                auto b = Matrix<int, dynamic, 2>{{{1, 2}, {3, 4}, {5, 6}}};
+
+                REQUIRE_THROWS_AS(a * b, std::runtime_error);
+            }
+        }
     }
 }
