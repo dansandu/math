@@ -541,10 +541,42 @@ auto operator*(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
     return result;
 }
 
+template<typename Type, size_type M, size_type N>
+auto operator*(const Matrix<Type, M, N>& matrix, Type scalar)
+{
+    auto result = matrix;
+    return result *= scalar;
+}
+
+template<typename Type, size_type M, size_type N>
+auto operator*(Type scalar, const Matrix<Type, M, N>& matrix)
+{
+    auto result = matrix;
+    return result *= scalar;
+}
+
+template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<
+             (M == MM || M == dynamic || MM == dynamic) && (N == NN || N == dynamic || NN == dynamic), Type>>
+auto operator+(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+{
+    auto copy = a;
+    return copy += b;
+}
+
+template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<
+             (M == MM || M == dynamic || MM == dynamic) && (N == NN || N == dynamic || NN == dynamic), Type>>
+auto operator-(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+{
+    auto copy = a;
+    return copy -= b;
+}
+
 template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
          typename = std::enable_if_t<(M == MM || M == dynamic || MM == dynamic) &&
                                      (N == NN || N == dynamic || NN == dynamic) && std::is_integral_v<Type>>>
-auto operator==(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b) noexcept
+auto operator==(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
 {
     return ((a.rowCount() == b.rowCount()) & (a.columnCount() == b.columnCount())) &&
            std::equal(a.cbegin(), a.cend(), b.cbegin());
@@ -553,7 +585,7 @@ auto operator==(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b) noex
 template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
          typename = std::enable_if_t<(M == MM || M == dynamic || MM == dynamic) &&
                                      (N == NN || N == dynamic || NN == dynamic) && std::is_integral_v<Type>>>
-auto operator!=(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b) noexcept
+auto operator!=(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
 {
     return !(a == b);
 }

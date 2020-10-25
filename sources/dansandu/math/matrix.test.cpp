@@ -261,7 +261,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
         }
     }
 
-    SECTION("implace addition")
+    SECTION("addition")
     {
         SECTION("static with static")
         {
@@ -271,9 +271,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto b = Matrix<int, 2, 2>{{{9, 34}, {29, 2}}};
                 auto expected = Matrix<int, 2, 2>{{{-50, 69}, {32, 2}}};
 
-                a += b;
-
-                REQUIRE(a == expected);
+                REQUIRE(a + b == expected);
             }
         }
 
@@ -285,9 +283,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto b = Matrix<int, dynamic, dynamic>{{120, 105, 130}};
                 auto expected = Matrix<int, 3, 1>{{130, 120, 150}};
 
-                a += b;
-
-                REQUIRE(a == expected);
+                REQUIRE(a + b == expected);
             }
 
             SECTION("dimensions mismatch")
@@ -295,7 +291,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, 3, 1>{{10, 15, 20}};
                 auto b = Matrix<int, dynamic, dynamic>{{120, 105}};
 
-                REQUIRE_THROWS_AS(a += b, std::runtime_error);
+                REQUIRE_THROWS_AS(a + b, std::runtime_error);
             }
         }
 
@@ -307,9 +303,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
                 auto expected = Matrix<int, 1, dynamic>{{13, 105, 1007}};
 
-                a += b;
-
-                REQUIRE(a == expected);
+                REQUIRE(a + b == expected);
             }
 
             SECTION("dimensions mismatch")
@@ -317,7 +311,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, 1, dynamic>{{3, 5}};
                 auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
 
-                REQUIRE_THROWS_AS(a += b, std::runtime_error);
+                REQUIRE_THROWS_AS(a + b, std::runtime_error);
             }
         }
 
@@ -329,9 +323,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto b = Matrix<int, dynamic, dynamic>{{30, 40}};
                 auto expected = Matrix<int, dynamic, dynamic>{{31, 42}};
 
-                a += b;
-
-                REQUIRE(a == expected);
+                REQUIRE(a + b == expected);
             }
 
             SECTION("dimensions mismatch")
@@ -339,7 +331,82 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
                 auto b = Matrix<int, dynamic, dynamic>{{30, 40, 50}};
 
-                REQUIRE_THROWS_AS(a += b, std::runtime_error);
+                REQUIRE_THROWS_AS(a + b, std::runtime_error);
+            }
+        }
+    }
+
+    SECTION("subtraction")
+    {
+        SECTION("static with static")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, 2, 2>{{{-59, 35}, {3, 0}}};
+                auto b = Matrix<int, 2, 2>{{{9, 34}, {29, 2}}};
+                auto expected = Matrix<int, 2, 2>{{{-68, 1}, {-26, -2}}};
+
+                REQUIRE(a - b == expected);
+            }
+        }
+
+        SECTION("static with dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, 3, 1>{{10, 15, 20}};
+                auto b = Matrix<int, dynamic, dynamic>{{120, 105, 130}};
+                auto expected = Matrix<int, 3, 1>{{-110, -90, -110}};
+
+                REQUIRE(a - b == expected);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, 3, 1>{{10, 15, 20}};
+                auto b = Matrix<int, dynamic, dynamic>{{120, 105}};
+
+                REQUIRE_THROWS_AS(a - b, std::runtime_error);
+            }
+        }
+
+        SECTION("mixed static with dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, 1, dynamic>{{3, 5, 7}};
+                auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
+                auto expected = Matrix<int, 1, dynamic>{{-7, -95, -993}};
+
+                REQUIRE(a - b == expected);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, 1, dynamic>{{3, 5}};
+                auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
+
+                REQUIRE_THROWS_AS(a - b, std::runtime_error);
+            }
+        }
+
+        SECTION("dynamic with dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
+                auto b = Matrix<int, dynamic, dynamic>{{30, 40}};
+                auto expected = Matrix<int, dynamic, dynamic>{{-29, -38}};
+
+                REQUIRE(a - b == expected);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
+                auto b = Matrix<int, dynamic, dynamic>{{30, 40, 50}};
+
+                REQUIRE_THROWS_AS(a - b, std::runtime_error);
             }
         }
     }
@@ -393,6 +460,25 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
                 REQUIRE_THROWS_AS(a * b, std::runtime_error);
             }
+        }
+    }
+
+    SECTION("scalar multiplication")
+    {
+        SECTION("static")
+        {
+            auto a = Matrix<int, 1, 4>{{1, 2, 3, 4}};
+            auto expected = Matrix<int, 1, 4>{{5, 10, 15, 20}};
+
+            REQUIRE(a * 5 == expected);
+        }
+
+        SECTION("dynamic")
+        {
+            auto a = Matrix<int, dynamic, dynamic>{{{1, 2}, {3, 4}}};
+            auto expected = Matrix<int, dynamic, dynamic>{{{3, 6}, {9, 12}}};
+
+            REQUIRE(a * 3 == expected);
         }
     }
 }
