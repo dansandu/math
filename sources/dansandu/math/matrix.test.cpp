@@ -4,8 +4,12 @@
 #include <stdexcept>
 
 using Catch::Detail::Approx;
+using dansandu::math::matrix::crossProduct;
+using dansandu::math::matrix::dotProduct;
 using dansandu::math::matrix::dynamic;
+using dansandu::math::matrix::magnitude;
 using dansandu::math::matrix::Matrix;
+using dansandu::math::matrix::normalized;
 
 TEST_CASE("dansandu::math::matrix::Matrix")
 {
@@ -479,6 +483,140 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             auto expected = Matrix<int, dynamic, dynamic>{{{3, 6}, {9, 12}}};
 
             REQUIRE(a * 3 == expected);
+        }
+    }
+
+    SECTION("magnitude")
+    {
+        SECTION("static")
+        {
+            auto a = Matrix<double, 1, 3>{{3.0, 5.0, -2.0}};
+
+            REQUIRE(magnitude(a) == Approx(6.164414));
+        }
+
+        SECTION("dynamic")
+        {
+            SECTION("valid dimensions")
+            {
+                auto a = Matrix<double, dynamic, dynamic>{{3.0, 5.0, -2.0}};
+
+                REQUIRE(magnitude(a) == Approx(6.164414));
+            }
+
+            SECTION("invalid dimensions")
+            {
+                auto a = Matrix<double, dynamic, dynamic>{{{3.0, 5.0}, {-2.0, 0.0}}};
+
+                REQUIRE_THROWS_AS(magnitude(a), std::runtime_error);
+            }
+        }
+    }
+
+    SECTION("normalization")
+    {
+        SECTION("static")
+        {
+            auto a = Matrix<double, 1, 3>{{3.0, 5.0, -2.0}};
+
+            auto n = normalized(a);
+
+            REQUIRE(n.x() == Approx(0.486664263));
+
+            REQUIRE(n.y() == Approx(0.811107106));
+
+            REQUIRE(n.z() == Approx(-0.324442842));
+        }
+
+        SECTION("dynamic")
+        {
+            SECTION("valid dimensions")
+            {
+                auto a = Matrix<double, dynamic, dynamic>{{3.0, 5.0, -2.0}};
+
+                auto n = normalized(a);
+
+                REQUIRE(n.x() == Approx(0.486664263));
+
+                REQUIRE(n.y() == Approx(0.811107106));
+
+                REQUIRE(n.z() == Approx(-0.324442842));
+            }
+
+            SECTION("invalid dimensions")
+            {
+                auto a = Matrix<double, dynamic, dynamic>{{{3.0, 5.0}, {-2.0, 0.0}}};
+
+                REQUIRE_THROWS_AS(normalized(a), std::runtime_error);
+            }
+        }
+    }
+
+    SECTION("dot product")
+    {
+        SECTION("static")
+        {
+            auto a = Matrix<int, 1, 3>{{3, 5, 7}};
+            auto b = Matrix<int, 3, 1>{{10, 100, 1000}};
+
+            REQUIRE(dotProduct(a, b) == 7530);
+        }
+
+        SECTION("dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, 1, dynamic>{{3, 5, 7}};
+                auto b = Matrix<int, dynamic, 1>{{10, 100, 1000}};
+
+                REQUIRE(dotProduct(a, b) == 7530);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, dynamic, dynamic>{{{3, 5}, {7, 0}}};
+                auto b = Matrix<int, dynamic, dynamic>{{10, 100}};
+                auto c = Matrix<int, dynamic, dynamic>{{10, 100, 1000}};
+
+                REQUIRE_THROWS_AS(dotProduct(a, b), std::runtime_error);
+
+                REQUIRE_THROWS_AS(dotProduct(b, c), std::runtime_error);
+            }
+        }
+    }
+
+    SECTION("cross product")
+    {
+        SECTION("static")
+        {
+            auto a = Matrix<int, 1, 3>{{1, 0, 0}};
+            auto b = Matrix<int, 3, 1>{{0, 0, 1}};
+            auto c = Matrix<int, 3, 1>{{0, -1, 0}};
+
+            REQUIRE(crossProduct(a, b) == c);
+        }
+
+        SECTION("dynamic")
+        {
+            SECTION("dimensions match")
+            {
+                auto a = Matrix<int, dynamic, dynamic>{{0, 1, 0}};
+                auto b = Matrix<int, dynamic, dynamic>{{0, 0, 1}};
+                auto c = Matrix<int, 3, 1>{{1, 0, 0}};
+
+                REQUIRE(crossProduct(a, b) == c);
+            }
+
+            SECTION("dimensions mismatch")
+            {
+                auto a = Matrix<int, dynamic, 3>{{{3, 5, 7}, {11, 13, 17}}};
+                auto b = Matrix<int, 1, dynamic>{{10, 100, 3}};
+                auto c = Matrix<int, 1, dynamic>{{10, 100}};
+
+                REQUIRE_THROWS_AS(crossProduct(a, b), std::runtime_error);
+
+                REQUIRE_THROWS_AS(crossProduct(b, c), std::runtime_error);
+            }
         }
     }
 }

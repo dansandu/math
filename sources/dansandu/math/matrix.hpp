@@ -590,4 +590,96 @@ auto operator!=(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
     return !(a == b);
 }
 
+template<typename Type, size_type M, size_type N,
+         typename = std::enable_if_t<M == 1 || M == dynamic || N == 1 || N == dynamic, Type>>
+auto magnitude(const Matrix<Type, M, N>& matrix)
+{
+    if constexpr (M == dynamic || N == dynamic)
+    {
+        if ((matrix.rowCount() != 1) & (matrix.columnCount() != 1))
+        {
+            THROW(std::runtime_error, "cannot get the magnitude of non-vector matrix ", matrix.rowCount(), "x",
+                  matrix.columnCount());
+        }
+    }
+    auto sum = dansandu::math::common::additive_identity<Type>;
+    for (const auto component : matrix)
+    {
+        sum += component * component;
+    }
+    return std::sqrt(sum);
+}
+
+template<typename Type, size_type M, size_type N,
+         typename = std::enable_if_t<M == 1 || M == dynamic || N == 1 || N == dynamic, Type>>
+auto normalized(const Matrix<Type, M, N>& matrix)
+{
+    if constexpr (M == dynamic || N == dynamic)
+    {
+        if ((matrix.rowCount() != 1) & (matrix.columnCount() != 1))
+        {
+            THROW(std::runtime_error, "cannot get the norm of non-vector matrix ", matrix.rowCount(), "x",
+                  matrix.columnCount());
+        }
+    }
+    auto sum = dansandu::math::common::additive_identity<Type>;
+    for (const auto component : matrix)
+    {
+        sum += component * component;
+    }
+    return matrix * (dansandu::math::common::multiplicative_identity<Type> / std::sqrt(sum));
+}
+
+template<
+    typename Type, size_type M, size_type N, size_type MM, size_type NN,
+    typename = std::enable_if_t<
+        ((M == 1 || M == dynamic) && (MM == 1 || MM == dynamic) && (N == NN || N == dynamic || NN == dynamic)) ||
+            ((M == 1 || M == dynamic) && (NN == 1 || NN == dynamic) && (N == MM || N == dynamic || NN == dynamic)) ||
+            ((N == 1 || N == dynamic) && (MM == 1 || MM == dynamic) && (M == NN || M == dynamic || NN == dynamic)) ||
+            ((N == 1 || N == dynamic) && (NN == 1 || NN == dynamic) && (M == MM || M == dynamic || NN == dynamic)),
+        Type>>
+auto dotProduct(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+{
+    if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+    {
+        if (((a.rowCount() != 1) & (a.columnCount() != 1)) | ((b.rowCount() != 1) & (b.columnCount() != 1)) |
+            ((a.rowCount() * a.columnCount() != b.rowCount() * b.columnCount())))
+        {
+            THROW(std::runtime_error, "cannot get the dot product of matrices ", a.rowCount(), "x", a.columnCount(),
+                  " and ", b.rowCount(), "x", b.columnCount());
+        }
+    }
+    auto sum = dansandu::math::common::additive_identity<Type>;
+    auto left = a.cbegin();
+    auto right = b.cbegin();
+    while (left != a.cend())
+    {
+        sum += *left++ * *right++;
+    }
+    return sum;
+}
+
+template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<(((M == 1 || M == dynamic) && (N == 3 || N == dynamic)) ||
+                                      ((M == 3 || M == dynamic) && (N == 1 || N == dynamic))) &&
+                                         (((MM == 1 || MM == dynamic) && (NN == 3 || NN == dynamic)) ||
+                                          ((MM == 3 || MM == dynamic) && (NN == 1 || NN == dynamic))),
+                                     Type>>
+auto crossProduct(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+{
+    if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+    {
+        if (((a.rowCount() != 1) & (a.columnCount() != 1)) | ((b.rowCount() != 1) & (b.columnCount() != 1)) |
+            (a.rowCount() * a.columnCount() != 3) | (b.rowCount() * b.columnCount() != 3))
+        {
+            THROW(std::runtime_error, "cannot get the cross product of matrices ", a.rowCount(), "x", a.columnCount(),
+                  " and ", b.rowCount(), "x", b.columnCount());
+        }
+    }
+    const auto x = a.y() * b.z() - b.y() * a.z();
+    const auto y = b.x() * a.z() - a.x() * b.z();
+    const auto z = a.x() * b.y() - b.x() * a.y();
+    return Matrix<Type, 3, 1>{{x, y, z}};
+}
+
 }
