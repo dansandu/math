@@ -216,7 +216,7 @@ public:
             {
                 if constexpr (DataStorage<Type, M, N>::strategy == DataStorageStrategy::stack)
                 {
-                    DataStorage<Type, M, N>::data[getIndex(row, column)] = array[row][column];
+                    unsafeSubscript(row, column) = array[row][column];
                 }
                 else
                 {
@@ -226,13 +226,14 @@ public:
         }
     }
 
-    constexpr Matrix(
-        size_type rows, size_type columns,
-        value_type fillValue =
-            dansandu::math::common::additive_identity<value_type>) noexcept(DataStorage<Type, M, N>::strategy ==
-                                                                            DataStorageStrategy::stack)
+    constexpr Matrix(size_type rows, size_type columns,
+                     value_type fillValue = dansandu::math::common::additive_identity<value_type>)
         : DimensionalityStorage<Type, M, N>{rows, columns}
     {
+        if ((rows < 0) | (columns < 0))
+        {
+            THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns);
+        }
         if constexpr (DataStorage<Type, M, N>::strategy == DataStorageStrategy::stack)
         {
             std::fill(begin(), end(), fillValue);
@@ -324,12 +325,32 @@ public:
         }
     }
 
+    auto& unsafeSubscript(size_type row, size_type column)
+    {
+        return DataStorage<Type, M, N>::data[getIndex(row, column)];
+    }
+
+    const auto& unsafeSubscript(size_type row, size_type column) const
+    {
+        return DataStorage<Type, M, N>::data[getIndex(row, column)];
+    }
+
+    auto& unsafeSubscript(size_type coordinate)
+    {
+        return DataStorage<Type, M, N>::data[getIndex(coordinate)];
+    }
+
+    const auto& unsafeSubscript(size_type coordinate) const
+    {
+        return DataStorage<Type, M, N>::data[getIndex(coordinate)];
+    }
+
     template<typename T = Type, typename = std::enable_if_t<M != 0 && N != 0, T>>
     auto& operator()(size_type row, size_type column)
     {
         if (canSubscript(row, column))
         {
-            return DataStorage<Type, M, N>::data[getIndex(row, column)];
+            return unsafeSubscript(row, column);
         }
         else
         {
@@ -343,7 +364,7 @@ public:
     {
         if (canSubscript(row, column))
         {
-            return DataStorage<Type, M, N>::data[getIndex(row, column)];
+            return unsafeSubscript(row, column);
         }
         else
         {
@@ -357,7 +378,7 @@ public:
     {
         if (canSubscript(coordinate))
         {
-            return DataStorage<Type, M, N>::data[getIndex(coordinate)];
+            return unsafeSubscript(coordinate);
         }
         else
         {
@@ -371,7 +392,7 @@ public:
     {
         if (canSubscript(coordinate))
         {
-            return DataStorage<Type, M, N>::data[getIndex(coordinate)];
+            return unsafeSubscript(coordinate);
         }
         else
         {
@@ -385,7 +406,7 @@ public:
     {
         if (canSubscript(0))
         {
-            return DataStorage<Type, M, N>::data[getIndex(0)];
+            return unsafeSubscript(0);
         }
         else
         {
@@ -398,7 +419,7 @@ public:
     {
         if (canSubscript(0))
         {
-            return DataStorage<Type, M, N>::data[getIndex(0)];
+            return unsafeSubscript(0);
         }
         else
         {
@@ -411,7 +432,7 @@ public:
     {
         if (canSubscript(1))
         {
-            return DataStorage<Type, M, N>::data[getIndex(1)];
+            return unsafeSubscript(1);
         }
         else
         {
@@ -424,7 +445,7 @@ public:
     {
         if (canSubscript(1))
         {
-            return DataStorage<Type, M, N>::data[getIndex(1)];
+            return unsafeSubscript(1);
         }
         else
         {
@@ -437,7 +458,7 @@ public:
     {
         if (canSubscript(2))
         {
-            return DataStorage<Type, M, N>::data[getIndex(2)];
+            return unsafeSubscript(2);
         }
         else
         {
@@ -450,7 +471,7 @@ public:
     {
         if (canSubscript(2))
         {
-            return DataStorage<Type, M, N>::data[getIndex(2)];
+            return unsafeSubscript(2);
         }
         else
         {
@@ -463,7 +484,7 @@ public:
     {
         if (canSubscript(3))
         {
-            return DataStorage<Type, M, N>::data[getIndex(3)];
+            return unsafeSubscript(3);
         }
         else
         {
@@ -476,7 +497,7 @@ public:
     {
         if (canSubscript(3))
         {
-            return DataStorage<Type, M, N>::data[getIndex(3)];
+            return unsafeSubscript(3);
         }
         else
         {
@@ -534,7 +555,7 @@ auto operator*(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
         {
             for (auto n = 0; n < a.columnCount(); ++n)
             {
-                result(m, p) += a(m, n) * b(n, p);
+                result.unsafeSubscript(m, p) += a.unsafeSubscript(m, n) * b.unsafeSubscript(n, p);
             }
         }
     }
@@ -676,9 +697,11 @@ auto crossProduct(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
                   " and ", b.rowCount(), "x", b.columnCount());
         }
     }
-    const auto x = a.y() * b.z() - b.y() * a.z();
-    const auto y = b.x() * a.z() - a.x() * b.z();
-    const auto z = a.x() * b.y() - b.x() * a.y();
+
+    const auto x = a.unsafeSubscript(1) * b.unsafeSubscript(2) - b.unsafeSubscript(1) * a.unsafeSubscript(2);
+    const auto y = b.unsafeSubscript(0) * a.unsafeSubscript(2) - a.unsafeSubscript(0) * b.unsafeSubscript(2);
+    const auto z = a.unsafeSubscript(0) * b.unsafeSubscript(1) - b.unsafeSubscript(0) * a.unsafeSubscript(1);
+
     return Matrix<Type, 3, 1>{{x, y, z}};
 }
 

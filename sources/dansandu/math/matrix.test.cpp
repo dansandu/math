@@ -223,6 +223,27 @@ TEST_CASE("dansandu::math::matrix::Matrix")
         }
     }
 
+    SECTION("fill constructor")
+    {
+        SECTION("valid dimensions")
+        {
+            auto matrix = Matrix<int, dynamic, dynamic>{5, 7, 9};
+
+            REQUIRE(matrix.rowCount() == 5);
+
+            REQUIRE(matrix.columnCount() == 7);
+
+            REQUIRE(std::all_of(matrix.cbegin(), matrix.cend(), [](auto e) { return e == 9; }));
+        }
+
+        SECTION("invalid dimensions")
+        {
+            REQUIRE_THROWS_AS(Matrix(-3, 5), std::out_of_range);
+
+            REQUIRE_THROWS_AS(Matrix(5, -1), std::out_of_range);
+        }
+    }
+
     SECTION("equality")
     {
         SECTION("static with static")
