@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 using Catch::Detail::Approx;
+using dansandu::math::matrix::ConstantMatrixView;
 using dansandu::math::matrix::crossProduct;
 using dansandu::math::matrix::dotProduct;
 using dansandu::math::matrix::dynamic;
@@ -113,7 +114,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
             REQUIRE(matrix.columnCount() == 0);
 
-            REQUIRE_THROWS_AS(matrix.length(), std::runtime_error);
+            REQUIRE_THROWS_AS(matrix.length(), std::logic_error);
 
             REQUIRE_THROWS_AS(matrix(0), std::out_of_range);
 
@@ -238,9 +239,9 @@ TEST_CASE("dansandu::math::matrix::Matrix")
 
         SECTION("invalid dimensions")
         {
-            REQUIRE_THROWS_AS(Matrix(-3, 5), std::out_of_range);
+            REQUIRE_THROWS_AS(Matrix<double>(-3, 5), std::out_of_range);
 
-            REQUIRE_THROWS_AS(Matrix(5, -1), std::out_of_range);
+            REQUIRE_THROWS_AS(Matrix<double>(5, -1), std::out_of_range);
         }
     }
 
@@ -316,7 +317,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, 3, 1>{{10, 15, 20}};
                 auto b = Matrix<int, dynamic, dynamic>{{120, 105}};
 
-                REQUIRE_THROWS_AS(a + b, std::runtime_error);
+                REQUIRE_THROWS_AS(a + b, std::logic_error);
             }
         }
 
@@ -336,7 +337,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, 1, dynamic>{{3, 5}};
                 auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
 
-                REQUIRE_THROWS_AS(a + b, std::runtime_error);
+                REQUIRE_THROWS_AS(a + b, std::logic_error);
             }
         }
 
@@ -356,7 +357,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
                 auto b = Matrix<int, dynamic, dynamic>{{30, 40, 50}};
 
-                REQUIRE_THROWS_AS(a + b, std::runtime_error);
+                REQUIRE_THROWS_AS(a + b, std::logic_error);
             }
         }
     }
@@ -391,7 +392,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, 3, 1>{{10, 15, 20}};
                 auto b = Matrix<int, dynamic, dynamic>{{120, 105}};
 
-                REQUIRE_THROWS_AS(a - b, std::runtime_error);
+                REQUIRE_THROWS_AS(a - b, std::logic_error);
             }
         }
 
@@ -411,7 +412,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, 1, dynamic>{{3, 5}};
                 auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
 
-                REQUIRE_THROWS_AS(a - b, std::runtime_error);
+                REQUIRE_THROWS_AS(a - b, std::logic_error);
             }
         }
 
@@ -431,7 +432,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
                 auto b = Matrix<int, dynamic, dynamic>{{30, 40, 50}};
 
-                REQUIRE_THROWS_AS(a - b, std::runtime_error);
+                REQUIRE_THROWS_AS(a - b, std::logic_error);
             }
         }
     }
@@ -463,7 +464,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, 2, dynamic>{{{3, 5, 7, 7}, {11, 13, 17, 17}}};
                 auto b = Matrix<int, 3, 1>{{23, 29, 31}};
 
-                REQUIRE_THROWS_AS(a * b, std::runtime_error);
+                REQUIRE_THROWS_AS(a * b, std::logic_error);
             }
         }
 
@@ -483,7 +484,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto a = Matrix<int, 1, dynamic>{{3, 5}};
                 auto b = Matrix<int, dynamic, 2>{{{1, 2}, {3, 4}, {5, 6}}};
 
-                REQUIRE_THROWS_AS(a * b, std::runtime_error);
+                REQUIRE_THROWS_AS(a * b, std::logic_error);
             }
         }
     }
@@ -529,7 +530,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             {
                 auto a = Matrix<double, dynamic, dynamic>{{{3.0, 5.0}, {-2.0, 0.0}}};
 
-                REQUIRE_THROWS_AS(magnitude(a), std::runtime_error);
+                REQUIRE_THROWS_AS(magnitude(a), std::logic_error);
             }
         }
     }
@@ -568,7 +569,7 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             {
                 auto a = Matrix<double, dynamic, dynamic>{{{3.0, 5.0}, {-2.0, 0.0}}};
 
-                REQUIRE_THROWS_AS(normalized(a), std::runtime_error);
+                REQUIRE_THROWS_AS(normalized(a), std::logic_error);
             }
         }
     }
@@ -599,9 +600,9 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto b = Matrix<int, dynamic, dynamic>{{10, 100}};
                 auto c = Matrix<int, dynamic, dynamic>{{10, 100, 1000}};
 
-                REQUIRE_THROWS_AS(dotProduct(a, b), std::runtime_error);
+                REQUIRE_THROWS_AS(dotProduct(a, b), std::logic_error);
 
-                REQUIRE_THROWS_AS(dotProduct(b, c), std::runtime_error);
+                REQUIRE_THROWS_AS(dotProduct(b, c), std::logic_error);
             }
         }
     }
@@ -634,9 +635,9 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto b = Matrix<int, 1, dynamic>{{10, 100, 3}};
                 auto c = Matrix<int, 1, dynamic>{{10, 100}};
 
-                REQUIRE_THROWS_AS(crossProduct(a, b), std::runtime_error);
+                REQUIRE_THROWS_AS(crossProduct(a, b), std::logic_error);
 
-                REQUIRE_THROWS_AS(crossProduct(b, c), std::runtime_error);
+                REQUIRE_THROWS_AS(crossProduct(b, c), std::logic_error);
             }
         }
     }

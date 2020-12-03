@@ -2,317 +2,128 @@
 
 #include "dansandu/ballotin/exception.hpp"
 #include "dansandu/math/common.hpp"
-
-#include <array>
-#include <vector>
+#include "dansandu/math/internal/common_matrix.hpp"
+#include "dansandu/math/internal/constant_matrix_view.hpp"
+#include "dansandu/math/internal/heap_matrix.hpp"
+#include "dansandu/math/internal/matrix_view.hpp"
+#include "dansandu/math/internal/stack_matrix.hpp"
 
 namespace dansandu::math::matrix
 {
 
-using dansandu::math::common::dynamic;
-
-using dansandu::math::common::size_type;
-
-enum class DataStorageStrategy
+template<typename T = float, size_type M = dynamic, size_type N = dynamic>
+class Matrix : private DataStorage<T, M, N>
 {
-    stack,
-    heap
-};
-
-template<typename Type, size_type M, size_type N>
-struct DataStorageStrategyFor
-{
-    constexpr static auto stackBytes = static_cast<size_type>(32);
-
-    constexpr static auto value = (M == dynamic || N == dynamic || M * N * sizeof(Type) > stackBytes)
-                                      ? DataStorageStrategy::heap
-                                      : DataStorageStrategy::stack;
-};
-
-template<typename Type, size_type M, size_type N,
-         DataStorageStrategy dataStorageStrategy = DataStorageStrategyFor<Type, M, N>::value>
-struct DataStorage;
-
-template<typename Type, size_type M, size_type N>
-struct DataStorage<Type, M, N, DataStorageStrategy::stack>
-{
-    constexpr static auto strategy = DataStorageStrategy::stack;
-
-    std::array<Type, M * N> data;
-};
-
-template<typename Type, size_type M, size_type N>
-struct DataStorage<Type, M, N, DataStorageStrategy::heap>
-{
-    constexpr static auto strategy = DataStorageStrategy::heap;
-
-    std::vector<Type> data;
-};
-
-template<typename Type, size_type M, size_type N>
-struct DimensionalityStorage;
-
-template<typename Type>
-struct DimensionalityStorage<Type, dynamic, dynamic>
-{
-    constexpr DimensionalityStorage() noexcept : rows{0}, columns{0}
-    {
-    }
-
-    constexpr DimensionalityStorage(size_type r, size_type c) noexcept : rows{r}, columns{c}
-    {
-    }
-
-    size_type rows;
-    size_type columns;
-};
-
-template<typename Type, size_type N>
-struct DimensionalityStorage<Type, dynamic, N>
-{
-    constexpr DimensionalityStorage() noexcept : rows{0}
-    {
-    }
-
-    constexpr DimensionalityStorage(size_type r, size_type) noexcept : rows{r}
-    {
-    }
-
-    size_type rows;
-};
-
-template<typename Type, size_type M>
-struct DimensionalityStorage<Type, M, dynamic>
-{
-    constexpr DimensionalityStorage() noexcept : columns{0}
-    {
-    }
-
-    constexpr DimensionalityStorage(size_type, size_type c) noexcept : columns{c}
-    {
-    }
-
-    size_type columns;
-};
-
-template<typename Type, size_type M, size_type N>
-struct DimensionalityStorage
-{
-    constexpr DimensionalityStorage() noexcept
-    {
-    }
-
-    constexpr DimensionalityStorage(size_type, size_type) noexcept
-    {
-    }
-};
-
-template<typename Type = float, size_type M = dynamic, size_type N = dynamic>
-class Matrix : private DimensionalityStorage<Type, M, N>, private DataStorage<Type, M, N>
-{
-    constexpr static auto isVectorOfMinimumLength(size_type length) noexcept
-    {
-        return ((M == 1 || M == dynamic) && (N == dynamic || N >= length)) ||
-               ((M == dynamic || M >= length) && (N == 1 || N == dynamic));
-    }
-
-    constexpr auto canSubscript(size_type index) const noexcept
-    {
-        return ((rowCount() == 1) & (index < columnCount())) | ((columnCount() == 1) & (index < rowCount()));
-    }
-
-    constexpr auto canSubscript(size_type row, size_type column) const noexcept
-    {
-        return (row >= 0) & (row < rowCount()) & (column >= 0) & (column < columnCount());
-    }
-
-    constexpr auto getIndex(size_type index) const noexcept
-    {
-        return index;
-    }
-
-    constexpr auto getIndex(size_type row, size_type column) const noexcept
-    {
-        return row * columnCount() + column;
-    }
-
 public:
     static_assert(M >= 0 || M == dynamic, "matrix static rows must be positive or dynamic");
     static_assert(N >= 0 || N == dynamic, "matrix static columns must be positive or dynamic");
     static_assert((M == 0) == (N == 0), "zero static rows imply zero static columns and vice-versa");
 
-    using value_type = Type;
+    using DataStorage<T, M, N>::DataStorage;
 
-    constexpr Matrix() noexcept(DataStorage<Type, M, N>::strategy == DataStorageStrategy::stack)
-    {
-        if constexpr (DataStorage<Type, M, N>::strategy == DataStorageStrategy::stack)
-        {
-            std::fill(begin(), end(), dansandu::math::common::additive_identity<value_type>);
-        }
-        else if constexpr (M != dynamic && N != dynamic)
-        {
-            DataStorage<Type, M, N>::data =
-                std::vector<value_type>(M * N, dansandu::math::common::additive_identity<value_type>);
-        }
-    }
-
-    template<size_type len, typename T = Type,
-             typename = std::enable_if_t<(M == len && N == 1) || (M == 1 && N == len) || (M == dynamic && N == 1) ||
-                                             (M == 1 && N == dynamic) || (M == dynamic && N == len) ||
-                                             (M == len && N == dynamic) || (M == dynamic && N == dynamic),
-                                         T>>
-    explicit constexpr Matrix(const value_type (&array)[len]) noexcept(DataStorage<Type, M, N>::strategy ==
-                                                                       DataStorageStrategy::stack)
-    {
-        if constexpr (M == dynamic)
-        {
-            if constexpr (N == len)
-            {
-                DimensionalityStorage<Type, M, N>::rows = 1;
-            }
-            else
-            {
-                DimensionalityStorage<Type, M, N>::rows = len;
-            }
-        }
-
-        if constexpr (N == dynamic)
-        {
-            if constexpr (M == 1)
-            {
-                DimensionalityStorage<Type, M, N>::columns = len;
-            }
-            else
-            {
-                DimensionalityStorage<Type, M, N>::columns = 1;
-            }
-        }
-
-        if constexpr (DataStorage<Type, M, N>::strategy == DataStorageStrategy::stack)
-        {
-            std::copy(array, array + len, begin());
-        }
-        else
-        {
-            DataStorage<Type, M, N>::data = std::vector<value_type>{array, array + len};
-        }
-    }
-
-    template<size_type m, size_type n, typename T = Type,
-             typename = std::enable_if_t<(M == m && N == n) || (M == m && N == dynamic) || (M == dynamic && N == n) ||
-                                             (M == dynamic && N == dynamic),
-                                         T>>
-    explicit constexpr Matrix(const value_type (&array)[m][n]) noexcept(DataStorage<Type, M, N>::strategy ==
-                                                                        DataStorageStrategy::stack)
-        : DimensionalityStorage<Type, M, N>{m, n}
-    {
-        if constexpr (DataStorage<Type, M, N>::strategy == DataStorageStrategy::heap)
-        {
-            DataStorage<Type, M, N>::data.reserve(m * n);
-        }
-        for (auto row = 0; row < m; ++row)
-        {
-            for (auto column = 0; column < n; ++column)
-            {
-                if constexpr (DataStorage<Type, M, N>::strategy == DataStorageStrategy::stack)
-                {
-                    unsafeSubscript(row, column) = array[row][column];
-                }
-                else
-                {
-                    DataStorage<Type, M, N>::data.push_back(array[row][column]);
-                }
-            }
-        }
-    }
-
-    constexpr Matrix(size_type rows, size_type columns,
-                     value_type fillValue = dansandu::math::common::additive_identity<value_type>)
-        : DimensionalityStorage<Type, M, N>{rows, columns}
-    {
-        if ((rows < 0) | (columns < 0))
-        {
-            THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns);
-        }
-        if constexpr (DataStorage<Type, M, N>::strategy == DataStorageStrategy::stack)
-        {
-            std::fill(begin(), end(), fillValue);
-        }
-        else if constexpr (M != dynamic && N != dynamic)
-        {
-            DataStorage<Type, M, N>::data = std::vector<value_type>(M * N, fillValue);
-        }
-        else
-        {
-            DataStorage<Type, M, N>::data = std::vector<value_type>(rows * columns, fillValue);
-        }
-    }
-
-    template<size_type MM, size_type NN, typename T = Type,
-             typename = std::enable_if_t<
-                 (M == MM || M == dynamic || MM == dynamic) && (N == NN || N == dynamic || NN == dynamic), T>>
-    auto& operator+=(const Matrix<value_type, MM, NN>& other)
+    template<size_type MM, size_type NN, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+    auto& operator+=(ConstantMatrixView<T, MM, NN> other)
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
         {
             if ((rowCount() != other.rowCount()) | (columnCount() != other.columnCount()))
             {
-                THROW(std::runtime_error, "cannot add matrices ", rowCount(), "x", columnCount(), " and ",
+                THROW(std::logic_error, "cannot add matrices ", rowCount(), "x", columnCount(), " and ",
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::common::add{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::common::Add{});
         return *this;
     }
 
-    template<size_type MM, size_type NN, typename T = Type,
-             typename = std::enable_if_t<
-                 (M == MM || M == dynamic || MM == dynamic) && (N == NN || N == dynamic || NN == dynamic), T>>
-    auto& operator-=(const Matrix<value_type, MM, NN>& other)
+    template<size_type MM, size_type NN, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+    auto& operator-=(ConstantMatrixView<T, MM, NN> other)
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
         {
             if ((rowCount() != other.rowCount()) | (columnCount() != other.columnCount()))
             {
-                THROW(std::runtime_error, "cannot subtract matrices ", rowCount(), "x", columnCount(), " and ",
+                THROW(std::logic_error, "cannot subtract matrices ", rowCount(), "x", columnCount(), " and ",
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::common::subtract{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::common::Subtract{});
         return *this;
     }
 
-    auto& operator*=(const value_type& scalar)
+    auto& operator*=(T scalar)
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::common::multiplyBy<value_type>{scalar});
+        std::transform(cbegin(), cend(), begin(), dansandu::math::common::MultiplyBy<T>{scalar});
         return *this;
     }
 
-    constexpr auto rowCount() const noexcept
+    template<typename TT = T, typename = std::enable_if_t<!isNullMatrix(M, N), TT>>
+    auto& operator()(size_type row, size_type column)
     {
-        if constexpr (M == dynamic)
+        if (canSubscript(rowCount(), columnCount(), row, column))
         {
-            return DimensionalityStorage<Type, M, N>::rows;
+            return unsafeSubscript(row, column);
         }
         else
         {
-            return M;
+            THROW(std::out_of_range, "cannot index the (", row, ", ", column, ") element in a ", rowCount(), "x",
+                  columnCount(), " matrix");
         }
     }
 
-    constexpr auto columnCount() const noexcept
+    template<typename TT = T, typename = std::enable_if_t<!isNullMatrix(M, N), TT>>
+    const auto& operator()(size_type row, size_type column) const
     {
-        if constexpr (N == dynamic)
+        if (canSubscript(rowCount(), columnCount(), row, column))
         {
-            return DimensionalityStorage<Type, M, N>::columns;
+            return unsafeSubscript(row, column);
         }
         else
         {
-            return N;
+            THROW(std::out_of_range, "cannot index the (", row, ", ", column, ") element in a ", rowCount(), "x",
+                  columnCount(), " matrix");
         }
     }
 
-    template<typename T = Type, typename = std::enable_if_t<M == dynamic || M == 1 || N == dynamic || N == 1, T>>
+    template<typename TT = T, typename = std::enable_if_t<isVector(M, N), TT>>
+    auto& operator()(size_type coordinate)
+    {
+        if (canSubscript(rowCount(), columnCount(), coordinate))
+        {
+            return unsafeSubscript(coordinate);
+        }
+        else
+        {
+            THROW(std::out_of_range, "cannot index the ", coordinate, "th element of a ", rowCount(), "x",
+                  columnCount(), " matrix");
+        }
+    }
+
+    template<typename TT = T, typename = std::enable_if_t<isVector(M, N), TT>>
+    const auto& operator()(size_type coordinate) const
+    {
+        if (canSubscript(rowCount(), columnCount(), coordinate))
+        {
+            return unsafeSubscript(coordinate);
+        }
+        else
+        {
+            THROW(std::out_of_range, "cannot index the ", coordinate, "th element of a ", rowCount(), "x",
+                  columnCount(), " matrix");
+        }
+    }
+
+    auto rowCount() const
+    {
+        return DataStorage<T, M, N>::rowCount();
+    }
+
+    auto columnCount() const
+    {
+        return DataStorage<T, M, N>::columnCount();
+    }
+
+    template<typename TT = T, typename = std::enable_if_t<isVector(M, N), TT>>
     auto length() const
     {
         if (rowCount() == 1 || columnCount() == 1)
@@ -321,90 +132,34 @@ public:
         }
         else
         {
-            THROW(std::runtime_error, "cannot get the length of non-vector matrix");
+            THROW(std::logic_error, "cannot get the length of non-vector matrix");
         }
     }
 
     auto& unsafeSubscript(size_type row, size_type column)
     {
-        return DataStorage<Type, M, N>::data[getIndex(row, column)];
+        return DataStorage<T, M, N>::unsafeSubscript(row, column);
     }
 
     const auto& unsafeSubscript(size_type row, size_type column) const
     {
-        return DataStorage<Type, M, N>::data[getIndex(row, column)];
+        return DataStorage<T, M, N>::unsafeSubscript(row, column);
     }
 
     auto& unsafeSubscript(size_type coordinate)
     {
-        return DataStorage<Type, M, N>::data[getIndex(coordinate)];
+        return DataStorage<T, M, N>::unsafeSubscript(coordinate);
     }
 
     const auto& unsafeSubscript(size_type coordinate) const
     {
-        return DataStorage<Type, M, N>::data[getIndex(coordinate)];
+        return DataStorage<T, M, N>::unsafeSubscript(coordinate);
     }
 
-    template<typename T = Type, typename = std::enable_if_t<M != 0 && N != 0, T>>
-    auto& operator()(size_type row, size_type column)
-    {
-        if (canSubscript(row, column))
-        {
-            return unsafeSubscript(row, column);
-        }
-        else
-        {
-            THROW(std::out_of_range, "cannot index the (", row, ", ", column, ") element in a ", rowCount(), "x",
-                  columnCount(), " matrix");
-        }
-    }
-
-    template<typename T = Type, typename = std::enable_if_t<M != 0 && N != 0, T>>
-    const auto& operator()(size_type row, size_type column) const
-    {
-        if (canSubscript(row, column))
-        {
-            return unsafeSubscript(row, column);
-        }
-        else
-        {
-            THROW(std::out_of_range, "cannot index the (", row, ", ", column, ") element in a ", rowCount(), "x",
-                  columnCount(), " matrix");
-        }
-    }
-
-    template<typename T = Type, typename = std::enable_if_t<M == dynamic || N == dynamic || M == 1 || N == 1, T>>
-    auto& operator()(size_type coordinate)
-    {
-        if (canSubscript(coordinate))
-        {
-            return unsafeSubscript(coordinate);
-        }
-        else
-        {
-            THROW(std::out_of_range, "cannot index the ", coordinate, "th element of a ", rowCount(), "x",
-                  columnCount(), " matrix");
-        }
-    }
-
-    template<typename T = Type, typename = std::enable_if_t<M == dynamic || N == dynamic || M == 1 || N == 1, T>>
-    const auto& operator()(size_type coordinate) const
-    {
-        if (canSubscript(coordinate))
-        {
-            return unsafeSubscript(coordinate);
-        }
-        else
-        {
-            THROW(std::out_of_range, "cannot index the ", coordinate, "th element of a ", rowCount(), "x",
-                  columnCount(), " matrix");
-        }
-    }
-
-    template<typename T = Type, typename = std::enable_if_t<isVectorOfMinimumLength(1), T>>
+    template<typename TT = T, typename = std::enable_if_t<isVectorOfMinimumLength(M, N, 1), TT>>
     auto& x()
     {
-        if (canSubscript(0))
+        if (canSubscript(rowCount(), columnCount(), 0))
         {
             return unsafeSubscript(0);
         }
@@ -414,10 +169,10 @@ public:
         }
     }
 
-    template<typename T = Type, typename = std::enable_if_t<isVectorOfMinimumLength(1), T>>
+    template<typename TT = T, typename = std::enable_if_t<isVectorOfMinimumLength(M, N, 1), TT>>
     const auto& x() const
     {
-        if (canSubscript(0))
+        if (canSubscript(rowCount(), columnCount(), 0))
         {
             return unsafeSubscript(0);
         }
@@ -427,10 +182,10 @@ public:
         }
     }
 
-    template<typename T = Type, typename = std::enable_if_t<isVectorOfMinimumLength(2), T>>
+    template<typename TT = T, typename = std::enable_if_t<isVectorOfMinimumLength(M, N, 2), TT>>
     auto& y()
     {
-        if (canSubscript(1))
+        if (canSubscript(rowCount(), columnCount(), 1))
         {
             return unsafeSubscript(1);
         }
@@ -440,10 +195,10 @@ public:
         }
     }
 
-    template<typename T = Type, typename = std::enable_if_t<isVectorOfMinimumLength(2), T>>
+    template<typename TT = T, typename = std::enable_if_t<isVectorOfMinimumLength(M, N, 2), TT>>
     const auto& y() const
     {
-        if (canSubscript(1))
+        if (canSubscript(rowCount(), columnCount(), 1))
         {
             return unsafeSubscript(1);
         }
@@ -453,10 +208,10 @@ public:
         }
     }
 
-    template<typename T = Type, typename = std::enable_if_t<isVectorOfMinimumLength(3), T>>
+    template<typename TT = T, typename = std::enable_if_t<isVectorOfMinimumLength(M, N, 3), TT>>
     auto& z()
     {
-        if (canSubscript(2))
+        if (canSubscript(rowCount(), columnCount(), 2))
         {
             return unsafeSubscript(2);
         }
@@ -466,10 +221,10 @@ public:
         }
     }
 
-    template<typename T = Type, typename = std::enable_if_t<isVectorOfMinimumLength(3), T>>
+    template<typename TT = T, typename = std::enable_if_t<isVectorOfMinimumLength(M, N, 3), TT>>
     const auto& z() const
     {
-        if (canSubscript(2))
+        if (canSubscript(rowCount(), columnCount(), 2))
         {
             return unsafeSubscript(2);
         }
@@ -479,10 +234,10 @@ public:
         }
     }
 
-    template<typename T = Type, typename = std::enable_if_t<isVectorOfMinimumLength(4), T>>
+    template<typename TT = T, typename = std::enable_if_t<isVectorOfMinimumLength(M, N, 4), TT>>
     auto& w()
     {
-        if (canSubscript(3))
+        if (canSubscript(rowCount(), columnCount(), 3))
         {
             return unsafeSubscript(3);
         }
@@ -492,10 +247,10 @@ public:
         }
     }
 
-    template<typename T = Type, typename = std::enable_if_t<isVectorOfMinimumLength(4), T>>
+    template<typename TT = T, typename = std::enable_if_t<isVectorOfMinimumLength(M, N, 4), TT>>
     const auto& w() const
     {
-        if (canSubscript(3))
+        if (canSubscript(rowCount(), columnCount(), 3))
         {
             return unsafeSubscript(3);
         }
@@ -505,50 +260,77 @@ public:
         }
     }
 
-    auto begin() noexcept
+    auto begin()
     {
-        return DataStorage<Type, M, N>::data.begin();
+        return DataStorage<T, M, N>::begin();
     }
 
-    auto end() noexcept
+    auto end()
     {
-        return DataStorage<Type, M, N>::data.end();
+        return DataStorage<T, M, N>::end();
     }
 
-    auto begin() const noexcept
+    auto begin() const
     {
-        return DataStorage<Type, M, N>::data.cbegin();
+        return DataStorage<T, M, N>::begin();
     }
 
-    auto end() const noexcept
+    auto end() const
     {
-        return DataStorage<Type, M, N>::data.cend();
+        return DataStorage<T, M, N>::end();
     }
 
-    auto cbegin() const noexcept
+    auto cbegin() const
     {
-        return DataStorage<Type, M, N>::data.cbegin();
+        return begin();
     }
 
-    auto cend() const noexcept
+    auto cend() const
     {
-        return DataStorage<Type, M, N>::data.cend();
+        return end();
+    }
+
+    template<size_type MM, size_type NN, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+    operator MatrixView<T, MM, NN>()
+    {
+        return {rowCount(), columnCount(), rowCount(), columnCount(), DataStorage<T, M, N>::data()};
+    }
+
+    template<size_type MM, size_type NN, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+    operator ConstantMatrixView<T, MM, NN>() const
+    {
+        return {rowCount(), columnCount(), rowCount(), columnCount(), DataStorage<T, M, N>::data()};
     }
 };
 
-template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
-         typename = std::enable_if_t<N == MM || N == dynamic || MM == dynamic, Type>>
-auto operator*(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+template<typename T, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN) && std::is_integral_v<T>>>
+auto operator==(ConstantMatrixView<T, M, N> a, ConstantMatrixView<T, MM, NN> b)
+{
+    return ((a.rowCount() == b.rowCount()) & (a.columnCount() == b.columnCount())) &&
+           std::equal(a.cbegin(), a.cend(), b.cbegin());
+}
+
+template<typename T, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN) && std::is_integral_v<T>>>
+auto operator!=(ConstantMatrixView<T, M, N> a, ConstantMatrixView<T, MM, NN> b)
+{
+    return !(a == b);
+}
+
+template<typename T, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<N == MM || N == dynamic || MM == dynamic>>
+auto operator*(ConstantMatrixView<T, M, N> a, ConstantMatrixView<T, MM, NN> b)
 {
     if constexpr (N == dynamic || MM == dynamic)
     {
         if (a.columnCount() != b.rowCount())
         {
-            THROW(std::runtime_error, "cannot multiply a ", a.rowCount(), "x", a.columnCount(), " matrix with ",
+            THROW(std::logic_error, "cannot multiply a ", a.rowCount(), "x", a.columnCount(), " matrix with ",
                   b.rowCount(), "x", b.columnCount(), " -- matrix dimensions do not match");
         }
     }
-    auto result = Matrix<Type, M, NN>{a.rowCount(), b.columnCount()};
+    auto result = Matrix<T, M, NN>{a.rowCount(), b.columnCount()};
     for (auto m = 0; m < a.rowCount(); ++m)
     {
         for (auto p = 0; p < b.columnCount(); ++p)
@@ -562,68 +344,48 @@ auto operator*(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
     return result;
 }
 
-template<typename Type, size_type M, size_type N>
-auto operator*(const Matrix<Type, M, N>& matrix, Type scalar)
+template<typename T, size_type M, size_type N>
+auto operator*(ConstantMatrixView<T, M, N> matrix, T scalar)
 {
     auto result = matrix;
     return result *= scalar;
 }
 
-template<typename Type, size_type M, size_type N>
-auto operator*(Type scalar, const Matrix<Type, M, N>& matrix)
+template<typename T, size_type M, size_type N>
+auto operator*(T scalar, ConstantMatrixView<T, M, N> matrix)
 {
     auto result = matrix;
     return result *= scalar;
 }
 
-template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
-         typename = std::enable_if_t<
-             (M == MM || M == dynamic || MM == dynamic) && (N == NN || N == dynamic || NN == dynamic), Type>>
-auto operator+(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+template<typename T, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+auto operator+(ConstantMatrixView<T, M, N> a, ConstantMatrixView<T, MM, NN> b)
 {
     auto copy = a;
     return copy += b;
 }
 
-template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
-         typename = std::enable_if_t<
-             (M == MM || M == dynamic || MM == dynamic) && (N == NN || N == dynamic || NN == dynamic), Type>>
-auto operator-(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+template<typename T, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+auto operator-(ConstantMatrixView<T, M, N> a, ConstantMatrixView<T, MM, NN> b)
 {
     auto copy = a;
     return copy -= b;
 }
 
-template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
-         typename = std::enable_if_t<(M == MM || M == dynamic || MM == dynamic) &&
-                                     (N == NN || N == dynamic || NN == dynamic) && std::is_integral_v<Type>>>
-auto operator==(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
-{
-    return ((a.rowCount() == b.rowCount()) & (a.columnCount() == b.columnCount())) &&
-           std::equal(a.cbegin(), a.cend(), b.cbegin());
-}
-
-template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
-         typename = std::enable_if_t<(M == MM || M == dynamic || MM == dynamic) &&
-                                     (N == NN || N == dynamic || NN == dynamic) && std::is_integral_v<Type>>>
-auto operator!=(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
-{
-    return !(a == b);
-}
-
-template<typename Type, size_type M, size_type N,
-         typename = std::enable_if_t<M == 1 || M == dynamic || N == 1 || N == dynamic, Type>>
-auto magnitude(const Matrix<Type, M, N>& matrix)
+template<typename T, size_type M, size_type N, typename = std::enable_if_t<isVector(M, N)>>
+auto magnitude(ConstantMatrixView<T, M, N> matrix)
 {
     if constexpr (M == dynamic || N == dynamic)
     {
         if ((matrix.rowCount() != 1) & (matrix.columnCount() != 1))
         {
-            THROW(std::runtime_error, "cannot get the magnitude of non-vector matrix ", matrix.rowCount(), "x",
+            THROW(std::logic_error, "cannot get the magnitude of non-vector matrix ", matrix.rowCount(), "x",
                   matrix.columnCount());
         }
     }
-    auto sum = dansandu::math::common::additive_identity<Type>;
+    auto sum = dansandu::math::common::additiveIdentity<T>;
     for (const auto component : matrix)
     {
         sum += component * component;
@@ -631,46 +393,39 @@ auto magnitude(const Matrix<Type, M, N>& matrix)
     return std::sqrt(sum);
 }
 
-template<typename Type, size_type M, size_type N,
-         typename = std::enable_if_t<M == 1 || M == dynamic || N == 1 || N == dynamic, Type>>
-auto normalized(const Matrix<Type, M, N>& matrix)
+template<typename T, size_type M, size_type N, typename = std::enable_if_t<isVector(M, N)>>
+auto normalized(ConstantMatrixView<T, M, N> matrix)
 {
     if constexpr (M == dynamic || N == dynamic)
     {
         if ((matrix.rowCount() != 1) & (matrix.columnCount() != 1))
         {
-            THROW(std::runtime_error, "cannot get the norm of non-vector matrix ", matrix.rowCount(), "x",
+            THROW(std::logic_error, "cannot get the norm of non-vector matrix ", matrix.rowCount(), "x",
                   matrix.columnCount());
         }
     }
-    auto sum = dansandu::math::common::additive_identity<Type>;
+    auto sum = dansandu::math::common::additiveIdentity<T>;
     for (const auto component : matrix)
     {
         sum += component * component;
     }
-    return matrix * (dansandu::math::common::multiplicative_identity<Type> / std::sqrt(sum));
+    return matrix * (dansandu::math::common::multiplicativeIdentity<T> / std::sqrt(sum));
 }
 
-template<
-    typename Type, size_type M, size_type N, size_type MM, size_type NN,
-    typename = std::enable_if_t<
-        ((M == 1 || M == dynamic) && (MM == 1 || MM == dynamic) && (N == NN || N == dynamic || NN == dynamic)) ||
-            ((M == 1 || M == dynamic) && (NN == 1 || NN == dynamic) && (N == MM || N == dynamic || NN == dynamic)) ||
-            ((N == 1 || N == dynamic) && (MM == 1 || MM == dynamic) && (M == NN || M == dynamic || NN == dynamic)) ||
-            ((N == 1 || N == dynamic) && (NN == 1 || NN == dynamic) && (M == MM || M == dynamic || NN == dynamic)),
-        Type>>
-auto dotProduct(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+template<typename T, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<vectorsOfEqualLength(M, N, MM, NN)>>
+auto dotProduct(ConstantMatrixView<T, M, N> a, ConstantMatrixView<T, MM, NN> b)
 {
     if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
     {
         if (((a.rowCount() != 1) & (a.columnCount() != 1)) | ((b.rowCount() != 1) & (b.columnCount() != 1)) |
             ((a.rowCount() * a.columnCount() != b.rowCount() * b.columnCount())))
         {
-            THROW(std::runtime_error, "cannot get the dot product of matrices ", a.rowCount(), "x", a.columnCount(),
+            THROW(std::logic_error, "cannot get the dot product of matrices ", a.rowCount(), "x", a.columnCount(),
                   " and ", b.rowCount(), "x", b.columnCount());
         }
     }
-    auto sum = dansandu::math::common::additive_identity<Type>;
+    auto sum = dansandu::math::common::additiveIdentity<T>;
     auto left = a.cbegin();
     auto right = b.cbegin();
     while (left != a.cend())
@@ -680,20 +435,16 @@ auto dotProduct(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
     return sum;
 }
 
-template<typename Type, size_type M, size_type N, size_type MM, size_type NN,
-         typename = std::enable_if_t<(((M == 1 || M == dynamic) && (N == 3 || N == dynamic)) ||
-                                      ((M == 3 || M == dynamic) && (N == 1 || N == dynamic))) &&
-                                         (((MM == 1 || MM == dynamic) && (NN == 3 || NN == dynamic)) ||
-                                          ((MM == 3 || MM == dynamic) && (NN == 1 || NN == dynamic))),
-                                     Type>>
-auto crossProduct(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
+template<typename T, size_type M, size_type N, size_type MM, size_type NN,
+         typename = std::enable_if_t<vectorsOfLength3(M, N, MM, NN)>>
+auto crossProduct(ConstantMatrixView<T, M, N> a, ConstantMatrixView<T, MM, NN> b)
 {
     if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
     {
         if (((a.rowCount() != 1) & (a.columnCount() != 1)) | ((b.rowCount() != 1) & (b.columnCount() != 1)) |
             (a.rowCount() * a.columnCount() != 3) | (b.rowCount() * b.columnCount() != 3))
         {
-            THROW(std::runtime_error, "cannot get the cross product of matrices ", a.rowCount(), "x", a.columnCount(),
+            THROW(std::logic_error, "cannot get the cross product of matrices ", a.rowCount(), "x", a.columnCount(),
                   " and ", b.rowCount(), "x", b.columnCount());
         }
     }
@@ -702,7 +453,7 @@ auto crossProduct(const Matrix<Type, M, N>& a, const Matrix<Type, MM, NN>& b)
     const auto y = b.unsafeSubscript(0) * a.unsafeSubscript(2) - a.unsafeSubscript(0) * b.unsafeSubscript(2);
     const auto z = a.unsafeSubscript(0) * b.unsafeSubscript(1) - b.unsafeSubscript(0) * a.unsafeSubscript(1);
 
-    return Matrix<Type, 3, 1>{{x, y, z}};
+    return Matrix<T, 3, 1>{{x, y, z}};
 }
 
 }
