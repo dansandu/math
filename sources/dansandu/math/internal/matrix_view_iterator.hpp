@@ -110,7 +110,6 @@ auto operator-(MatrixViewIterator<T> iterator, size_type n)
     return iterator -= n;
 }
 
-
 template<typename T>
 bool operator!=(MatrixViewIterator<T> left, MatrixViewIterator<T> right)
 {

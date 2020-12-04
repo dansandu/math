@@ -35,10 +35,6 @@ public:
                 DimensionalityStorage<T, M, N>::rows = L;
             }
         }
-        else
-        {
-            DimensionalityStorage<T, M, N>::rows = M;
-        }
 
         if constexpr (N == dynamic)
         {
@@ -50,10 +46,6 @@ public:
             {
                 DimensionalityStorage<T, M, N>::columns = 1;
             }
-        }
-        else
-        {
-            DimensionalityStorage<T, M, N>::columns = N;
         }
     }
 
@@ -79,6 +71,31 @@ public:
                   " and must match static rows and columns if not dynamic");
         }
         data_ = std::vector<T>(rowCount() * columnCount(), fillValue);
+    }
+
+    template<typename IteratorBegin, typename IteratorEnd>
+    DataStorage(size_type rows, size_type columns, IteratorBegin sourceBegin, IteratorEnd sourceEnd)
+        : DimensionalityStorage<T, M, N>{rows, columns}
+    {
+        if ((rows < 0) | (columns < 0) | ((M != dynamic) & (M != rows)) | ((N != dynamic) & (N != columns)))
+        {
+            THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
+                  " and must match static rows and columns if not dynamic");
+        }
+        data_.reserve(rowCount() * columnCount());
+        auto sourceIterator = sourceBegin;
+        for (auto i = 0; i < rowCount() * columnCount(); ++i)
+        {
+            if (sourceIterator == sourceEnd)
+            {
+                THROW(std::out_of_range, "source underflows matrix");
+            }
+            data_.push_back(*sourceIterator++);
+        }
+        if (sourceIterator != sourceEnd)
+        {
+            THROW(std::out_of_range, "source overflows matrix");
+        }
     }
 
     auto& unsafeSubscript(size_type row, size_type column)
@@ -129,6 +146,16 @@ public:
     auto end() const
     {
         return data_.end();
+    }
+
+    auto cbegin() const
+    {
+        return data_.cbegin();
+    }
+
+    auto cend() const
+    {
+        return data_.cend();
     }
 
     auto data()

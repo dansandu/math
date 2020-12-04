@@ -9,7 +9,30 @@ namespace dansandu::math::matrix
 
 using size_type = int;
 
+enum class DataStorageStrategy
+{
+    stack,
+    heap,
+    view,
+    constantView
+};
+
 constexpr auto dynamic = -1;
+
+constexpr auto isData(DataStorageStrategy strategy)
+{
+    return strategy == DataStorageStrategy::stack || strategy == DataStorageStrategy::heap;
+}
+
+constexpr auto isView(DataStorageStrategy strategy)
+{
+    return strategy == DataStorageStrategy::view;
+}
+
+constexpr auto isConstantView(DataStorageStrategy strategy)
+{
+    return strategy == DataStorageStrategy::constantView;
+}
 
 constexpr auto isNullMatrix(size_type m, size_type n)
 {
@@ -63,12 +86,6 @@ constexpr auto vectorsOfEqualLength(size_type m, size_type n, size_type mm, size
            ((n == 1 || n == dynamic) && (mm == 1 || mm == dynamic) && (m == nn || m == dynamic || nn == dynamic)) ||
            ((n == 1 || n == dynamic) && (nn == 1 || nn == dynamic) && (m == mm || m == dynamic || nn == dynamic));
 }
-
-enum class DataStorageStrategy
-{
-    stack,
-    heap
-};
 
 template<typename T, size_type M, size_type N>
 struct DataStorageStrategyFor
@@ -178,7 +195,7 @@ struct DimensionalityStorage<T, dynamic, dynamic>
     size_type columns;
 };
 
-template<typename T, size_type M, size_type N, DataStorageStrategy S = DataStorageStrategyFor<T, M, N>::value>
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
 class DataStorage;
 
 }

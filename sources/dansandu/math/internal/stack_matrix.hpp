@@ -13,7 +13,7 @@ template<typename T, size_type M, size_type N>
 class DataStorage<T, M, N, DataStorageStrategy::stack> : private DimensionalityStorage<T, M, N>
 {
 public:
-    DataStorage()
+    DataStorage() : DimensionalityStorage<T, M, N>{M, N}
     {
         std::fill(begin(), end(), dansandu::math::common::additiveIdentity<T>);
     }
@@ -45,6 +45,31 @@ public:
                   " and must match static rows and columns if not dynamic");
         }
         std::fill(begin(), end(), fillValue);
+    }
+
+    template<typename IteratorBegin, typename IteratorEnd>
+    DataStorage(size_type rows, size_type columns, IteratorBegin sourceBegin, IteratorEnd sourceEnd)
+        : DimensionalityStorage<T, M, N>{rows, columns}
+    {
+        if ((rows < 0) | (columns < 0) | (M != rows) | (N != columns))
+        {
+            THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
+                  " and must match static rows and columns if not dynamic");
+        }
+        auto iterator = begin();
+        auto sourceIterator = sourceBegin;
+        for (auto i = 0; i < rowCount() * columnCount(); ++i)
+        {
+            if (sourceIterator == sourceEnd)
+            {
+                THROW(std::out_of_range, "source underflows matrix");
+            }
+            *iterator++ = *sourceIterator++;
+        }
+        if (sourceIterator != sourceEnd)
+        {
+            THROW(std::out_of_range, "source overflows matrix");
+        }
     }
 
     auto& unsafeSubscript(size_type row, size_type column)
@@ -95,6 +120,16 @@ public:
     auto end() const
     {
         return data_.end();
+    }
+
+    auto cbegin() const
+    {
+        return data_.cbegin();
+    }
+
+    auto cend() const
+    {
+        return data_.cend();
     }
 
     auto data()

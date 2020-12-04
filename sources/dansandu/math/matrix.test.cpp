@@ -10,6 +10,7 @@ using dansandu::math::matrix::dotProduct;
 using dansandu::math::matrix::dynamic;
 using dansandu::math::matrix::magnitude;
 using dansandu::math::matrix::Matrix;
+using dansandu::math::matrix::MatrixView;
 using dansandu::math::matrix::normalized;
 
 TEST_CASE("dansandu::math::matrix::Matrix")
@@ -298,6 +299,17 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto expected = Matrix<int, 2, 2>{{{-50, 69}, {32, 2}}};
 
                 REQUIRE(a + b == expected);
+
+                SECTION("view")
+                {
+                    auto av = MatrixView<int, 2, 2>{a};
+
+                    av += b;
+
+                    REQUIRE(av == a);
+
+                    REQUIRE(av == expected);
+                }
             }
         }
 
@@ -385,6 +397,17 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto expected = Matrix<int, 3, 1>{{-110, -90, -110}};
 
                 REQUIRE(a - b == expected);
+
+                SECTION("view")
+                {
+                    auto av = MatrixView<int, dynamic, dynamic>{a};
+
+                    av -= b;
+
+                    REQUIRE(av == a);
+
+                    REQUIRE(av == expected);
+                }
             }
 
             SECTION("dimensions mismatch")
@@ -497,6 +520,20 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             auto expected = Matrix<int, 1, 4>{{5, 10, 15, 20}};
 
             REQUIRE(a * 5 == expected);
+
+            SECTION("view")
+            {
+                auto av = MatrixView<int, 1, 4>{a};
+
+                REQUIRE(av * 5 == expected);
+            }
+
+            SECTION("constant view")
+            {
+                auto av = ConstantMatrixView<int, 1, 4>{a};
+
+                REQUIRE(av * 5 == expected);
+            }
         }
 
         SECTION("dynamic")
@@ -582,6 +619,22 @@ TEST_CASE("dansandu::math::matrix::Matrix")
             auto b = Matrix<int, 3, 1>{{10, 100, 1000}};
 
             REQUIRE(dotProduct(a, b) == 7530);
+
+            SECTION("view")
+            {
+                auto av = MatrixView<int, 1, 3>{a};
+                auto bv = MatrixView<int, 3, 1>{b};
+
+                REQUIRE(dotProduct(av, bv) == 7530);
+            }
+
+            SECTION("constant view")
+            {
+                auto av = ConstantMatrixView<int, 1, 3>{a};
+                auto bv = ConstantMatrixView<int, 3, 1>{b};
+
+                REQUIRE(dotProduct(av, bv) == 7530);
+            }
         }
 
         SECTION("dynamic")
@@ -592,6 +645,22 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 auto b = Matrix<int, dynamic, 1>{{10, 100, 1000}};
 
                 REQUIRE(dotProduct(a, b) == 7530);
+
+                SECTION("view")
+                {
+                    auto av = MatrixView<int, 1, dynamic>{a};
+                    auto bv = MatrixView<int, dynamic, 1>{b};
+
+                    REQUIRE(dotProduct(av, bv) == 7530);
+                }
+
+                SECTION("constant view")
+                {
+                    auto av = ConstantMatrixView<int, 1, dynamic>{a};
+                    auto bv = ConstantMatrixView<int, dynamic, 1>{b};
+
+                    REQUIRE(dotProduct(av, bv) == 7530);
+                }
             }
 
             SECTION("dimensions mismatch")
