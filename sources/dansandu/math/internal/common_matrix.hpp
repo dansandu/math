@@ -87,6 +87,17 @@ constexpr auto vectorsOfEqualLength(size_type m, size_type n, size_type mm, size
            ((n == 1 || n == dynamic) && (nn == 1 || nn == dynamic) && (m == mm || m == dynamic || nn == dynamic));
 }
 
+constexpr auto dynamics(size_type m, size_type n, size_type o, size_type p)
+{
+    return (m == dynamic) + (n == dynamic) + (o == dynamic) + (p == dynamic);
+}
+
+constexpr auto subinterval(size_type a, size_type b, size_type l)
+{
+    return (a == dynamic || 0 <= a) && (b == dynamic || 1 <= b) && (l == dynamic || a == dynamic || a <= l) &&
+           (l == dynamic || b == dynamic || b <= l) && (l == dynamic || a == dynamic || b == dynamic || a + b <= l);
+}
+
 template<typename T, size_type M, size_type N>
 struct DataStorageStrategyFor
 {

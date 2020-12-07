@@ -12,8 +12,9 @@ using dansandu::math::matrix::magnitude;
 using dansandu::math::matrix::Matrix;
 using dansandu::math::matrix::MatrixView;
 using dansandu::math::matrix::normalized;
+using dansandu::math::matrix::Slicer;
 
-TEST_CASE("dansandu::math::matrix::Matrix")
+TEST_CASE("Matrix")
 {
     SECTION("default constructor")
     {
@@ -709,5 +710,24 @@ TEST_CASE("dansandu::math::matrix::Matrix")
                 REQUIRE_THROWS_AS(crossProduct(b, c), std::logic_error);
             }
         }
+    }
+
+    SECTION("slicing")
+    {
+        SECTION("constant view")
+        {
+            const auto a = Matrix<int, dynamic, 3>{{{3, 5, 7}, {11, 13, 17}}};
+
+            REQUIRE(Slicer<1, 1, 0, 2>::slice(a) == Matrix<int, 1, 2>{{11, 13}});
+
+            auto s = Slicer<1, 1, 0, dynamic>::slice(a, 3);
+            auto actual = std::vector<int>{s.cbegin(), s.cend()};
+            auto expected = std::vector<int>{{11, 13, 17}};
+
+            REQUIRE(actual == expected);
+        }
+
+        // REQUIRE(slicer<dynamic, 1, 0, 2>::slice(a, 0) == Matrix<int, 1, 2>{{1, 2}});
+        // REQUIRE(slicer<dynamic, 1, 0, 2>::slice(a, 1) == Matrix<int, 1, 2>{{3, 4}});
     }
 }
