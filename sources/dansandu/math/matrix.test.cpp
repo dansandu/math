@@ -718,18 +718,18 @@ TEST_CASE("Matrix")
 
         SECTION("data to constant view")
         {
-            REQUIRE(Slicer<1, 1, 0, 2>::slice(matrix) == Matrix<int, 1, 2>{{11, 13}});
+            REQUIRE(Slicer<1, 0, 1, 2>::slice(matrix) == Matrix<int, 1, 2>{{11, 13}});
 
-            const auto view = Slicer<1, 1, 0, dynamic>::slice(matrix, 3);
+            const auto view = Slicer<1, 0, 1, dynamic>::slice(matrix, 3);
 
             REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == std::vector<int>{{11, 13, 17}});
         }
 
         SECTION("constant view to constant view")
         {
-            const auto view = Slicer<0, 2, 1, 2>::slice(matrix);
+            const auto view = Slicer<0, 1, 2, 2>::slice(matrix);
 
-            REQUIRE(Slicer<0, 2, 1, 1>::slice(view) == Matrix<int, 2, 1>{{7, 17}});
+            REQUIRE(Slicer<0, 1, 2, 1>::slice(view) == Matrix<int, 2, 1>{{7, 17}});
         }
     }
 }

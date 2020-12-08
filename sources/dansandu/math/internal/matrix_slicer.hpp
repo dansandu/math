@@ -5,12 +5,12 @@
 namespace dansandu::math::matrix
 {
 
-template<size_type BeginRow, size_type Rows, size_type BeginColumn, size_type Columns>
+template<size_type BeginRow, size_type BeginColumn, size_type Rows, size_type Columns>
 class Slicer
 {
 public:
     template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
-    static std::enable_if_t<sizeof...(A) == dynamics(BeginRow, Rows, BeginColumn, Columns) &&
+    static std::enable_if_t<sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) &&
                                 subinterval(BeginRow, Rows, M) && subinterval(BeginColumn, Columns, N),
                             ConstantMatrixView<T, Rows, Columns>>
     slice(const MatrixImplementation<T, M, N, S>& matrix, A... arguments)
@@ -19,10 +19,13 @@ public:
         size_type unpacked[4] = {0};
         (..., (unpacked[index++] = arguments));
         index = 0;
+
         const auto viewBeginRow = BeginRow != dynamic ? BeginRow : unpacked[index++];
-        const auto viewRows = Rows != dynamic ? Rows : unpacked[index++];
         const auto viewBeginColumn = BeginColumn != dynamic ? BeginColumn : unpacked[index++];
+
+        const auto viewRows = Rows != dynamic ? Rows : unpacked[index++];
         const auto viewColumns = Columns != dynamic ? Columns : unpacked[index++];
+
         const auto viewBegin = matrix.data() + viewBeginRow * matrix.sourceColumnCount() + viewBeginColumn;
 
         if constexpr (BeginRow == dynamic || Rows == dynamic || M == dynamic)
