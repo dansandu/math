@@ -201,6 +201,16 @@ public:
         return DataStorage<T, M, N, S>::columnCount();
     }
 
+    auto sourceRowCount() const
+    {
+        return DataStorage<T, M, N, S>::sourceRowCount();
+    }
+
+    auto sourceColumnCount() const
+    {
+        return DataStorage<T, M, N, S>::sourceColumnCount();
+    }
+
     template<typename TT = T, typename = std::enable_if_t<isVector(M, N), TT>>
     auto length() const
     {

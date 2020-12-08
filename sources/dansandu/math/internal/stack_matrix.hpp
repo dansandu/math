@@ -102,6 +102,16 @@ public:
         return DimensionalityStorage<T, M, N>::columnCount();
     }
 
+    auto sourceRowCount() const
+    {
+        return DimensionalityStorage<T, M, N>::rowCount();
+    }
+
+    auto sourceColumnCount() const
+    {
+        return DimensionalityStorage<T, M, N>::columnCount();
+    }
+
     auto begin()
     {
         return data_.begin();

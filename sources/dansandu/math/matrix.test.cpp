@@ -714,20 +714,22 @@ TEST_CASE("Matrix")
 
     SECTION("slicing")
     {
-        SECTION("constant view")
+        const auto matrix = Matrix<int, dynamic, 3>{{{3, 5, 7}, {11, 13, 17}}};
+
+        SECTION("data to constant view")
         {
-            const auto a = Matrix<int, dynamic, 3>{{{3, 5, 7}, {11, 13, 17}}};
+            REQUIRE(Slicer<1, 1, 0, 2>::slice(matrix) == Matrix<int, 1, 2>{{11, 13}});
 
-            REQUIRE(Slicer<1, 1, 0, 2>::slice(a) == Matrix<int, 1, 2>{{11, 13}});
+            const auto view = Slicer<1, 1, 0, dynamic>::slice(matrix, 3);
 
-            auto s = Slicer<1, 1, 0, dynamic>::slice(a, 3);
-            auto actual = std::vector<int>{s.cbegin(), s.cend()};
-            auto expected = std::vector<int>{{11, 13, 17}};
-
-            REQUIRE(actual == expected);
+            REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == std::vector<int>{{11, 13, 17}});
         }
 
-        // REQUIRE(slicer<dynamic, 1, 0, 2>::slice(a, 0) == Matrix<int, 1, 2>{{1, 2}});
-        // REQUIRE(slicer<dynamic, 1, 0, 2>::slice(a, 1) == Matrix<int, 1, 2>{{3, 4}});
+        SECTION("constant view to constant view")
+        {
+            const auto view = Slicer<0, 2, 1, 2>::slice(matrix);
+
+            REQUIRE(Slicer<0, 2, 1, 1>::slice(view) == Matrix<int, 2, 1>{{7, 17}});
+        }
     }
 }

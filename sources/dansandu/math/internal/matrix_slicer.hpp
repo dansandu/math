@@ -23,7 +23,7 @@ public:
         const auto viewRows = Rows != dynamic ? Rows : unpacked[index++];
         const auto viewBeginColumn = BeginColumn != dynamic ? BeginColumn : unpacked[index++];
         const auto viewColumns = Columns != dynamic ? Columns : unpacked[index++];
-        const auto viewBegin = matrix.data() + viewBeginRow * matrix.columnCount() + viewBeginColumn;
+        const auto viewBegin = matrix.data() + viewBeginRow * matrix.sourceColumnCount() + viewBeginColumn;
 
         if constexpr (BeginRow == dynamic || Rows == dynamic || M == dynamic)
         {
@@ -44,7 +44,7 @@ public:
             }
         }
 
-        return {viewRows, viewColumns, matrix.rowCount(), matrix.columnCount(), viewBegin};
+        return {viewRows, viewColumns, matrix.sourceRowCount(), matrix.sourceColumnCount(), viewBegin};
     }
 };
 

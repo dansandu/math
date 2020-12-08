@@ -42,6 +42,16 @@ public:
         return DimensionalityStorage<T, M, N>::columnCount();
     }
 
+    auto sourceRowCount() const
+    {
+        return sourceRowCount_;
+    }
+
+    auto sourceColumnCount() const
+    {
+        return sourceColumnCount_;
+    }
+
     auto begin() const
     {
         return MatrixViewIterator<T>{sourceColumnCount_, columnCount(), viewBegin_};
