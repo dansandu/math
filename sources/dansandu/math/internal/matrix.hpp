@@ -448,6 +448,12 @@ public:
         return DataStorage<T, M, N, S>::cend();
     }
 
+    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    auto data()
+    {
+        return DataStorage<T, M, N, S>::data();
+    }
+
     auto data() const
     {
         return DataStorage<T, M, N, S>::data();

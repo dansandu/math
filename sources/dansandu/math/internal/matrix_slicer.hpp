@@ -10,10 +10,35 @@ class Slicer
 {
 public:
     template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
-    static std::enable_if_t<sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) &&
-                                subinterval(BeginRow, Rows, M) && subinterval(BeginColumn, Columns, N),
-                            ConstantMatrixView<T, Rows, Columns>>
+    static std::enable_if_t<
+        sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) && subinterval(BeginRow, Rows, M) &&
+            subinterval(BeginColumn, Columns, N),
+        std::conditional_t<isView(S), MatrixView<T, Rows, Columns>, ConstantMatrixView<T, Rows, Columns>>>
     slice(const MatrixImplementation<T, M, N, S>& matrix, A... arguments)
+    {
+        const auto [viewBeginRow, viewBeginColumn, viewRows, viewColumns] = unpackArguments(matrix, arguments...);
+
+        const auto viewBegin = matrix.data() + viewBeginRow * matrix.sourceColumnCount() + viewBeginColumn;
+
+        return {viewRows, viewColumns, matrix.sourceRowCount(), matrix.sourceColumnCount(), viewBegin};
+    }
+
+    template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
+    static std::enable_if_t<sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) && isData(S) &&
+                                subinterval(BeginRow, Rows, M) && subinterval(BeginColumn, Columns, N),
+                            MatrixView<T, Rows, Columns>>
+    slice(MatrixImplementation<T, M, N, S>& matrix, A... arguments)
+    {
+        const auto [viewBeginRow, viewBeginColumn, viewRows, viewColumns] = unpackArguments(matrix, arguments...);
+
+        const auto viewBegin = matrix.data() + viewBeginRow * matrix.sourceColumnCount() + viewBeginColumn;
+
+        return {viewRows, viewColumns, matrix.sourceRowCount(), matrix.sourceColumnCount(), viewBegin};
+    }
+
+private:
+    template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
+    static auto unpackArguments(const MatrixImplementation<T, M, N, S>& matrix, A... arguments)
     {
         size_type index = 0;
         size_type unpacked[4] = {0};
@@ -25,8 +50,6 @@ public:
 
         const auto viewRows = Rows != dynamic ? Rows : unpacked[index++];
         const auto viewColumns = Columns != dynamic ? Columns : unpacked[index++];
-
-        const auto viewBegin = matrix.data() + viewBeginRow * matrix.sourceColumnCount() + viewBeginColumn;
 
         if constexpr (BeginRow == dynamic || Rows == dynamic || M == dynamic)
         {
@@ -47,7 +70,7 @@ public:
             }
         }
 
-        return {viewRows, viewColumns, matrix.sourceRowCount(), matrix.sourceColumnCount(), viewBegin};
+        return std::make_tuple(viewBeginRow, viewBeginColumn, viewRows, viewColumns);
     }
 };
 

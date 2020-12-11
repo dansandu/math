@@ -22,7 +22,7 @@ TEST_CASE("Matrix")
         {
             SECTION("null")
             {
-                auto matrix = Matrix<int, 0, 0>{};
+                const auto matrix = Matrix<int, 0, 0>{};
 
                 REQUIRE(matrix.rowCount() == 0);
 
@@ -31,7 +31,7 @@ TEST_CASE("Matrix")
 
             SECTION("row vector")
             {
-                auto vector = Matrix<int, 1, 2>{};
+                const auto vector = Matrix<int, 1, 2>{};
 
                 REQUIRE(vector.rowCount() == 1);
 
@@ -52,7 +52,7 @@ TEST_CASE("Matrix")
 
             SECTION("column vector")
             {
-                auto vector = Matrix<int, 3, 1>{};
+                const auto vector = Matrix<int, 3, 1>{};
 
                 REQUIRE(vector.rowCount() == 3);
 
@@ -75,7 +75,7 @@ TEST_CASE("Matrix")
 
             SECTION("non-vector")
             {
-                auto matrix = Matrix<int, 2, 3>{};
+                const auto matrix = Matrix<int, 2, 3>{};
 
                 REQUIRE(matrix.rowCount() == 2);
 
@@ -101,7 +101,7 @@ TEST_CASE("Matrix")
 
         SECTION("null dynamic x dynamic")
         {
-            auto matrix = Matrix<int, dynamic, dynamic>{};
+            const auto matrix = Matrix<int, dynamic, dynamic>{};
 
             REQUIRE(matrix.rowCount() == 0);
 
@@ -110,7 +110,7 @@ TEST_CASE("Matrix")
 
         SECTION("null static x dynamic")
         {
-            auto matrix = Matrix<int, 2, dynamic>{};
+            const auto matrix = Matrix<int, 2, dynamic>{};
 
             REQUIRE(matrix.rowCount() == 2);
 
@@ -127,7 +127,7 @@ TEST_CASE("Matrix")
 
         SECTION("null dynamic x static")
         {
-            auto matrix = Matrix<int, dynamic, 1>{};
+            const auto matrix = Matrix<int, dynamic, 1>{};
 
             REQUIRE(matrix.rowCount() == 0);
 
@@ -714,22 +714,46 @@ TEST_CASE("Matrix")
 
     SECTION("slicing")
     {
-        const auto matrix = Matrix<int, dynamic, 3>{{{3, 5, 7}, {11, 13, 17}}};
-
-        SECTION("data to constant view")
+        SECTION("data to view")
         {
-            REQUIRE(Slicer<1, 0, 1, 2>::slice(matrix) == Matrix<int, 1, 2>{{11, 13}});
+            auto matrix = Matrix<int, 2, 3>{{{3, 5, 7}, {11, 13, 17}}};
 
-            const auto view = Slicer<1, 0, 1, dynamic>::slice(matrix, 3);
+            const auto view = Slicer<0, 0, 2, 2>::slice(matrix);
 
-            REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == std::vector<int>{{11, 13, 17}});
+            REQUIRE(view == Matrix<int, 2, 2>{{{3, 5}, {11, 13}}});
+
+            view += Matrix<int, 2, 2>{{{-10, -20}, {-30, -40}}};
+
+            REQUIRE(view == Matrix<int, 2, 2>{{{-7, -15}, {-19, -27}}});
+
+            REQUIRE(matrix == Matrix<int, 2, 3>{{{-7, -15, 7}, {-19, -27, 17}}});
+
+            SECTION("view to view")
+            {
+                const auto secondView = Slicer<1, 0, 1, 2>::slice(view);
+
+                secondView *= 5;
+
+                REQUIRE(secondView == Matrix<int, 1, 2>{{-95, -135}});
+
+                REQUIRE(matrix == Matrix<int, 2, 3>{{{-7, -15, 7}, {-95, -135, 17}}});
+            }
         }
 
-        SECTION("constant view to constant view")
+        SECTION("constant data to constant view")
         {
+            const auto matrix = Matrix<int, dynamic, 3>{{{3, 5, 7}, {11, 13, 17}}};
+
             const auto view = Slicer<0, 1, 2, 2>::slice(matrix);
 
-            REQUIRE(Slicer<0, 1, 2, 1>::slice(view) == Matrix<int, 2, 1>{{7, 17}});
+            REQUIRE(view == Matrix<int, 2, 2>{{{5, 7}, {13, 17}}});
+
+            SECTION("constant view to constant view")
+            {
+                const auto secondView = Slicer<0, 1, dynamic, dynamic>::slice(view, 2, 1);
+
+                REQUIRE(secondView == Matrix<int, dynamic, dynamic>{{7, 17}});
+            }
         }
     }
 }
