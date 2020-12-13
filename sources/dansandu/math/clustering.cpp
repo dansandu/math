@@ -16,7 +16,8 @@ using namespace dansandu::range::range;
 namespace dansandu::math::clustering
 {
 
-std::pair<Matrix<float>, std::vector<int>> kMeans(ConstantMatrixView<float> samples, int clusters, int iterations)
+std::pair<Matrix<float>, std::vector<int>> kMeans(const ConstantMatrixView<float> samples, const int clusters,
+                                                  const int iterations)
 {
     if (clusters <= 0)
     {
@@ -38,13 +39,13 @@ std::pair<Matrix<float>, std::vector<int>> kMeans(ConstantMatrixView<float> samp
         auto count = std::vector<int>(centroids.rowCount());
         for (auto s = 0; s < samples.rowCount(); ++s)
         {
+            const auto sample = sliceRow(samples, s);
             auto label = 0;
             auto minimumDistance = -1.0f;
-            auto sample = sliceRow(samples, s);
             for (auto c = 0; c < centroids.rowCount(); ++c)
             {
-                auto centroid = sliceRow(centroids, c);
-                auto d = distance(sample, centroid);
+                const auto centroid = sliceRow(centroids, c);
+                const auto d = distance(sample, centroid);
                 if (minimumDistance < 0.0f || d < minimumDistance)
                 {
                     label = c;
