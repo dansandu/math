@@ -74,4 +74,32 @@ private:
     }
 };
 
+template<typename M>
+auto sliceRow(M&& matrix, int row)
+{
+    constexpr auto staticColumnCount = std::decay_t<M>::staticColumnCount;
+    if constexpr (staticColumnCount == dynamic)
+    {
+        return Slicer<dynamic, 0, 1, staticColumnCount>::slice(std::forward<M>(matrix), row, matrix.columnCount());
+    }
+    else
+    {
+        return Slicer<dynamic, 0, 1, staticColumnCount>::slice(std::forward<M>(matrix), row);
+    }
+}
+
+template<typename M>
+auto sliceColumn(M&& matrix, int column)
+{
+    constexpr auto staticRowCount = std::decay_t<M>::staticRowCount;
+    if constexpr (staticRowCount == dynamic)
+    {
+        return Slicer<0, dynamic, staticRowCount, 1>::slice(std::forward<M>(matrix), column, matrix.rowCount());
+    }
+    else
+    {
+        return Slicer<0, dynamic, staticRowCount, 1>::slice(std::forward<M>(matrix), column);
+    }
+}
+
 }

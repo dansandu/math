@@ -6,6 +6,7 @@
 using Catch::Detail::Approx;
 using dansandu::math::matrix::ConstantMatrixView;
 using dansandu::math::matrix::crossProduct;
+using dansandu::math::matrix::distance;
 using dansandu::math::matrix::dotProduct;
 using dansandu::math::matrix::dynamic;
 using dansandu::math::matrix::magnitude;
@@ -675,6 +676,14 @@ TEST_CASE("Matrix")
                 REQUIRE_THROWS_AS(dotProduct(b, c), std::logic_error);
             }
         }
+    }
+
+    SECTION("distance")
+    {
+        auto a = Matrix<double>{{1.0, 3.0, 10.0}};
+        auto b = Matrix<double>{{5.0, 0.0, -2.0}};
+
+        REQUIRE(distance(a, b) == Approx(13.0));
     }
 
     SECTION("cross product")

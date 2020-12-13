@@ -19,6 +19,14 @@ public:
     static_assert(N >= 0 || N == dynamic, "matrix static columns must be positive or dynamic");
     static_assert((M == 0) == (N == 0), "zero static rows imply zero static columns and vice-versa");
 
+    using value_type = T;
+
+    static constexpr auto staticRowCount = M;
+
+    static constexpr auto staticColumnCount = N;
+
+    static constexpr auto dataStorageStrategy = S;
+
     using DataStorage<T, M, N, S>::DataStorage;
 
     template<
@@ -27,6 +35,21 @@ public:
     explicit MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& source)
         : DataStorage<T, M, N, S>{source.rowCount(), source.columnCount(), source.cbegin(), source.cend()}
     {
+    }
+
+    template<size_type MM, size_type NN, DataStorageStrategy SS,
+             typename = std::enable_if_t<isView(S) && dimensionsMatch(M, N, MM, NN)>>
+    void deepCopy(const MatrixImplementation<T, MM, NN, SS>& other) const
+    {
+        if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+        {
+            if ((rowCount() != other.rowCount()) | (columnCount() != other.columnCount()))
+            {
+                THROW(std::logic_error, "cannot copy matrices ", rowCount(), "x", columnCount(), " and ",
+                      other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
+            }
+        }
+        std::copy(other.cbegin(), other.cend(), begin());
     }
 
     template<size_type MM, size_type NN, DataStorageStrategy SS,
@@ -104,6 +127,20 @@ public:
     auto& operator*=(T scalar) const
     {
         std::transform(cbegin(), cend(), begin(), dansandu::math::common::MultiplyBy<T>{scalar});
+        return *this;
+    }
+
+    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    auto& operator/=(T scalar)
+    {
+        std::transform(cbegin(), cend(), begin(), dansandu::math::common::DivideBy<T>{scalar});
+        return *this;
+    }
+
+    template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
+    auto& operator/=(T scalar) const
+    {
+        std::transform(cbegin(), cend(), begin(), dansandu::math::common::DivideBy<T>{scalar});
         return *this;
     }
 
@@ -619,6 +656,33 @@ auto dotProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplement
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+         DataStorageStrategy SS, typename = std::enable_if_t<vectorsOfEqualLength(M, N, MM, NN)>>
+auto distance(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
+{
+    if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+    {
+        if (((a.rowCount() != 1) & (a.columnCount() != 1)) | ((b.rowCount() != 1) & (b.columnCount() != 1)) |
+            ((a.rowCount() * a.columnCount() != b.rowCount() * b.columnCount())))
+        {
+            THROW(std::logic_error, "cannot get the distance of matrices ", a.rowCount(), "x", a.columnCount(), " and ",
+                  b.rowCount(), "x", b.columnCount());
+        }
+    }
+    auto sum = dansandu::math::common::additiveIdentity<T>;
+    auto left = a.cbegin();
+    auto leftEnd = a.cend();
+    auto right = b.cbegin();
+    while (left != leftEnd)
+    {
+        const auto difference = *left - *right;
+        sum += difference * difference;
+        ++left;
+        ++right;
+    }
+    return std::sqrt(sum);
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
          DataStorageStrategy SS, typename = std::enable_if_t<vectorsOfLength3(M, N, MM, NN)>>
 auto crossProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
@@ -637,6 +701,15 @@ auto crossProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImpleme
     const auto z = a.unsafeSubscript(0) * b.unsafeSubscript(1) - b.unsafeSubscript(0) * a.unsafeSubscript(1);
 
     return Matrix<T, 3, 1>{{x, y, z}};
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+bool close(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b, const T epsilon)
+{
+    return a.rowCount() == b.rowCount() && a.columnCount() == b.columnCount() &&
+           std::equal(a.cbegin(), a.cend(), b.cbegin(), b.cend(),
+                      [epsilon](auto l, auto r) { return std::abs(l - r) < epsilon; });
 }
 
 }
