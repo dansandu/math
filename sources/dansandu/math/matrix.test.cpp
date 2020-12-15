@@ -13,7 +13,9 @@ using dansandu::math::matrix::magnitude;
 using dansandu::math::matrix::Matrix;
 using dansandu::math::matrix::MatrixView;
 using dansandu::math::matrix::normalized;
+using dansandu::math::matrix::sliceColumn;
 using dansandu::math::matrix::Slicer;
+using dansandu::math::matrix::sliceRow;
 
 TEST_CASE("Matrix")
 {
@@ -763,6 +765,68 @@ TEST_CASE("Matrix")
 
                 REQUIRE(secondView == Matrix<int, dynamic, dynamic>{{7, 17}});
             }
+        }
+    }
+
+    SECTION("row slicing")
+    {
+        auto matrix = Matrix<int>{{{1, 2}, {3, 4}}};
+
+        SECTION("first row")
+        {
+            const auto row = sliceRow(matrix, 0);
+
+            row.x() = 11;
+
+            REQUIRE(matrix == Matrix<int>{{{11, 2}, {3, 4}}});
+
+            row.y() = 22;
+
+            REQUIRE(matrix == Matrix<int>{{{11, 22}, {3, 4}}});
+        }
+
+        SECTION("second row")
+        {
+            const auto row = sliceRow(matrix, 1);
+
+            row.x() = 33;
+
+            REQUIRE(matrix == Matrix<int>{{{1, 2}, {33, 4}}});
+
+            row.y() = 44;
+
+            REQUIRE(matrix == Matrix<int>{{{1, 2}, {33, 44}}});
+        }
+    }
+
+    SECTION("column slicing")
+    {
+        auto matrix = Matrix<int>{{{1, 2}, {3, 4}}};
+
+        SECTION("first column")
+        {
+            const auto column = sliceColumn(matrix, 0);
+
+            column.x() = 11;
+
+            REQUIRE(matrix == Matrix<int>{{{11, 2}, {3, 4}}});
+
+            column.y() = 33;
+
+            REQUIRE(matrix == Matrix<int>{{{11, 2}, {33, 4}}});
+        }
+
+        SECTION("second row")
+        {
+            const auto column = sliceColumn(matrix, 1);
+
+            column.x() = 22;
+
+            REQUIRE(matrix == Matrix<int>{{{1, 22}, {3, 4}}});
+
+            column.y() = 44;
+
+            REQUIRE(matrix == Matrix<int>{{{1, 22}, {3, 44}}});
         }
     }
 }

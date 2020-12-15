@@ -86,7 +86,7 @@ private:
 
     auto getIndex(size_type index) const
     {
-        if (sourceRowCount_ == 1)
+        if (rowCount() == 1)
         {
             return index;
         }

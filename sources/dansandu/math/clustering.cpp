@@ -58,7 +58,7 @@ std::pair<Matrix<float>, std::vector<int>> kMeans(const ConstantMatrixView<float
         }
         for (auto c = 0; c < centroids.rowCount(); ++c)
         {
-            sliceRow(newCentroids, c) /= count[c];
+            sliceRow(newCentroids, c) /= static_cast<float>(count[c]);
         }
         centroids = std::move(newCentroids);
     }
