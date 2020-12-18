@@ -7,11 +7,7 @@
 namespace dansandu::math::common
 {
 
-using size_type = int;
-
-constexpr auto dynamic = -1;
-
-struct add
+struct Add
 {
     template<typename A, typename B>
     constexpr auto operator()(A&& a, B&& b) const
@@ -20,7 +16,7 @@ struct add
     }
 };
 
-struct subtract
+struct Subtract
 {
     template<typename A, typename B>
     constexpr auto operator()(A&& a, B&& b) const
@@ -29,7 +25,7 @@ struct subtract
     }
 };
 
-struct multiply
+struct Multiply
 {
     template<typename A, typename B>
     constexpr auto operator()(A&& a, B&& b) const
@@ -38,7 +34,7 @@ struct multiply
     }
 };
 
-struct divide
+struct Divide
 {
     template<typename A, typename B>
     constexpr auto operator()(A&& a, B&& b) const
@@ -47,7 +43,7 @@ struct divide
     }
 };
 
-struct power
+struct Power
 {
     template<typename Base, typename Exponent>
     constexpr auto operator()(Base&& base, Exponent&& exponent) const
@@ -56,7 +52,7 @@ struct power
     }
 };
 
-struct log
+struct Log
 {
     template<typename Base, typename Value>
     constexpr auto operator()(Base&& base, Value&& value) const
@@ -66,9 +62,9 @@ struct log
 };
 
 template<typename Scalar>
-struct multiplyBy
+struct MultiplyBy
 {
-    multiplyBy(Scalar scalar) : scalar_{std::move(scalar)}
+    MultiplyBy(Scalar scalar) : scalar_{std::move(scalar)}
     {
     }
 
@@ -83,9 +79,9 @@ private:
 };
 
 template<typename Scalar>
-struct divideBy
+struct DivideBy
 {
-    divideBy(Scalar scalar) : scalar_{std::move(scalar)}
+    DivideBy(Scalar scalar) : scalar_{std::move(scalar)}
     {
     }
 
@@ -106,12 +102,12 @@ constexpr T get_pi()
 }
 
 template<typename T>
-struct numeric_traits
+struct NumericTraits
 {
 };
 
 template<>
-struct numeric_traits<int>
+struct NumericTraits<int>
 {
     static constexpr int additive_identity = 0;
     static constexpr int multiplicative_identity = 1;
@@ -119,7 +115,7 @@ struct numeric_traits<int>
 };
 
 template<>
-struct numeric_traits<float>
+struct NumericTraits<float>
 {
     static constexpr float additive_identity = 0.0F;
     static constexpr float multiplicative_identity = 1.0F;
@@ -127,7 +123,7 @@ struct numeric_traits<float>
 };
 
 template<>
-struct numeric_traits<double>
+struct NumericTraits<double>
 {
     static constexpr double additive_identity = 0.0;
     static constexpr double multiplicative_identity = 1.0;
@@ -135,19 +131,19 @@ struct numeric_traits<double>
 };
 
 template<typename T>
-constexpr auto additive_identity = numeric_traits<T>::additive_identity;
+constexpr auto additiveIdentity = NumericTraits<T>::additive_identity;
 
 template<typename T>
-constexpr auto multiplicative_identity = numeric_traits<T>::multiplicative_identity;
+constexpr auto multiplicativeIdentity = NumericTraits<T>::multiplicative_identity;
 
 template<typename T>
-constexpr auto pi = numeric_traits<T>::pi;
+constexpr auto pi = NumericTraits<T>::pi;
 
-template<typename Type>
+template<typename T>
 class QuadraticEquation
 {
 public:
-    using value_type = std::decay_t<Type>;
+    using value_type = std::decay_t<T>;
 
     QuadraticEquation(value_type a, value_type b, value_type c) : a_{a}, b_{b}, delta_{b * b - 4 * a * c}
     {
