@@ -8,7 +8,7 @@ using dansandu::math::matrix::Matrix;
 using dansandu::math::matrix::sliceRow;
 
 // clang-format off
-TEST_CASE("Clustering")
+TEST_CASE("clustering")
 {
     SECTION("k-means")
     {

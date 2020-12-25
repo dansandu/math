@@ -140,6 +140,12 @@ template<typename T>
 constexpr auto pi = NumericTraits<T>::pi;
 
 template<typename T>
+constexpr auto close(T lhs, T rhs, T epsilon)
+{
+    return std::abs(lhs - rhs) < epsilon;
+}
+
+template<typename T>
 class QuadraticEquation
 {
 public:

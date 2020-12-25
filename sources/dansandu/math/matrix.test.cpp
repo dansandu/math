@@ -17,7 +17,7 @@ using dansandu::math::matrix::sliceColumn;
 using dansandu::math::matrix::Slicer;
 using dansandu::math::matrix::sliceRow;
 
-TEST_CASE("Matrix")
+TEST_CASE("matrix")
 {
     SECTION("default constructor")
     {
