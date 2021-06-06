@@ -8,6 +8,8 @@
 #include "dansandu/math/internal/matrix_view.hpp"
 #include "dansandu/math/internal/stack_matrix.hpp"
 
+#include <algorithm>
+
 namespace dansandu::math::matrix
 {
 
