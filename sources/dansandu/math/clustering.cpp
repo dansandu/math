@@ -22,7 +22,7 @@ static Matrix<float> selectCentroidsAtRandom(const ConstantMatrixView<float> sam
     auto centroids = Matrix<float>{clusters, samples.columnCount()};
     auto generator = std::minstd_rand{};
     integers(0, 1, samples.rowCount()) | shuffle(generator) | take(clusters) |
-        consume(
+        forEach(
             [i = 0, &samples, &centroids](auto j) mutable { sliceRow(centroids, i++).deepCopy(sliceRow(samples, j)); });
     return centroids;
 }
