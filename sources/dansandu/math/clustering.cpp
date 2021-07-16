@@ -1,13 +1,13 @@
 #include "dansandu/math/clustering.hpp"
 #include "dansandu/ballotin/exception.hpp"
-#include "dansandu/ballotin/test/random.hpp"
+#include "dansandu/ballotin/random.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/range/range.hpp"
 
 #include <limits>
 #include <random>
 
-using dansandu::ballotin::test::random::PredictableBitGenerator;
+using dansandu::ballotin::random::PredictableBitGenerator;
 using dansandu::math::matrix::ConstantMatrixView;
 using dansandu::math::matrix::distance;
 using dansandu::math::matrix::dynamic;
