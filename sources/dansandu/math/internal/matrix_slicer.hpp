@@ -5,7 +5,8 @@
 namespace dansandu::math::matrix
 {
 
-template<size_type BeginRow, size_type BeginColumn, size_type Rows, size_type Columns>
+template<size_type BeginRow = dynamic, size_type BeginColumn = dynamic, size_type Rows = dynamic,
+         size_type Columns = dynamic>
 class Slicer
 {
 public:

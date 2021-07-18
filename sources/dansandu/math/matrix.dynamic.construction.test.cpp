@@ -6,6 +6,7 @@
 using dansandu::math::matrix::ConstantMatrixView;
 using dansandu::math::matrix::dynamic;
 using dansandu::math::matrix::Matrix;
+using dansandu::math::matrix::MatrixView;
 using dansandu::math::matrix::Slicer;
 
 TEST_CASE("matrix.dynamic.construction")
@@ -121,11 +122,11 @@ TEST_CASE("matrix.dynamic.construction")
 
     SECTION("copy")
     {
-        const auto container = Matrix<int>{{{1, 2, 3}, {4, 5, 6}}};
+        const auto original = Matrix<int>{{{1, 2, 3}, {4, 5, 6}}};
 
         SECTION("container to container")
         {
-            const auto matrix = Matrix<int>{container};
+            const auto matrix = Matrix<int>{original};
 
             REQUIRE(matrix.rowCount() == 2);
 
@@ -139,7 +140,7 @@ TEST_CASE("matrix.dynamic.construction")
 
         SECTION("container to view")
         {
-            const auto matrix = ConstantMatrixView<int>{container};
+            const auto matrix = ConstantMatrixView<int>{original};
 
             REQUIRE(matrix.rowCount() == 2);
 
@@ -153,7 +154,7 @@ TEST_CASE("matrix.dynamic.construction")
 
         SECTION("view to container")
         {
-            const auto view = Slicer<1, 0, 1, 3>::slice(container);
+            const auto view = Slicer<1, 0>::slice(original, 1, 3);
             const auto matrix = Matrix<int>{view};
 
             REQUIRE(matrix.rowCount() == 1);
@@ -168,7 +169,7 @@ TEST_CASE("matrix.dynamic.construction")
 
         SECTION("view to view")
         {
-            const auto view = Slicer<0, 1, 2, 1>::slice(container);
+            const auto view = Slicer<0, 1>::slice(original, 2, 1);
             const auto matrix = ConstantMatrixView<int>{view};
 
             REQUIRE(matrix.rowCount() == 2);
@@ -179,6 +180,92 @@ TEST_CASE("matrix.dynamic.construction")
             const auto expected = std::vector<int>{{2, 5}};
 
             REQUIRE(actual == expected);
+        }
+    }
+
+    SECTION("move")
+    {
+        auto original = Matrix<int>{{{1, 2, 3}, {4, 5, 6}}};
+
+        SECTION("container to container")
+        {
+            const auto matrix = Matrix<int>{std::move(original)};
+
+            REQUIRE(matrix.rowCount() == 2);
+
+            REQUIRE(matrix.columnCount() == 3);
+
+            REQUIRE(original.rowCount() == 0);
+
+            REQUIRE(original.columnCount() == 0);
+
+            const auto expectedMatrix = std::vector<int>{{1, 2, 3, 4, 5, 6}};
+            const auto expectedOriginal = std::vector<int>{};
+
+            REQUIRE(std::vector<int>{matrix.cbegin(), matrix.cend()} == expectedMatrix);
+
+            REQUIRE(std::vector<int>{original.cbegin(), original.cend()} == expectedOriginal);
+        }
+
+        SECTION("container to view")
+        {
+            const auto matrix = ConstantMatrixView<int>{std::move(original)};
+
+            REQUIRE(matrix.rowCount() == 2);
+
+            REQUIRE(matrix.columnCount() == 3);
+
+            REQUIRE(original.rowCount() == 2);
+
+            REQUIRE(original.columnCount() == 3);
+
+            const auto expected = std::vector<int>{{1, 2, 3, 4, 5, 6}};
+
+            REQUIRE(std::vector<int>{matrix.cbegin(), matrix.cend()} == expected);
+
+            REQUIRE(std::vector<int>{original.cbegin(), original.cend()} == expected);
+        }
+
+        const auto expectedOriginal = std::vector<int>{{1, 2, 3, 4, 5, 6}};
+
+        SECTION("view to container")
+        {
+            const auto view = Slicer<0, 0>::slice(original, 2, 1);
+            const auto matrix = Matrix<int>{std::move(view)};
+
+            REQUIRE(matrix.rowCount() == 2);
+
+            REQUIRE(matrix.columnCount() == 1);
+
+            REQUIRE(original.rowCount() == 2);
+
+            REQUIRE(original.columnCount() == 3);
+
+            const auto expectedMatrix = std::vector<int>{{1, 4}};
+
+            REQUIRE(std::vector<int>{matrix.cbegin(), matrix.cend()} == expectedMatrix);
+
+            REQUIRE(std::vector<int>{original.cbegin(), original.cend()} == expectedOriginal);
+        }
+
+        SECTION("view to view")
+        {
+            const auto view = Slicer<1, 0>::slice(original, 1, 3);
+            const auto matrix = MatrixView<int>{std::move(view)};
+
+            REQUIRE(matrix.rowCount() == 1);
+
+            REQUIRE(matrix.columnCount() == 3);
+
+            REQUIRE(original.rowCount() == 2);
+
+            REQUIRE(original.columnCount() == 3);
+
+            const auto expectedMatrix = std::vector<int>{{4, 5, 6}};
+
+            REQUIRE(std::vector<int>{matrix.cbegin(), matrix.cend()} == expectedMatrix);
+
+            REQUIRE(std::vector<int>{original.cbegin(), original.cend()} == expectedOriginal);
         }
     }
 }
