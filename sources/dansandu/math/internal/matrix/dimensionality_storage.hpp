@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dansandu/math/internal/common_matrix.hpp"
+#include "dansandu/math/internal/matrix/common.hpp"
 
 namespace dansandu::math::matrix
 {

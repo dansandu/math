@@ -2,11 +2,11 @@
 
 #include "dansandu/ballotin/exception.hpp"
 #include "dansandu/math/common.hpp"
-#include "dansandu/math/internal/common_matrix.hpp"
-#include "dansandu/math/internal/constant_matrix_view.hpp"
-#include "dansandu/math/internal/heap_matrix.hpp"
-#include "dansandu/math/internal/matrix_view.hpp"
-#include "dansandu/math/internal/stack_matrix.hpp"
+#include "dansandu/math/internal/matrix/common.hpp"
+#include "dansandu/math/internal/matrix/data_storage_constant_view.hpp"
+#include "dansandu/math/internal/matrix/data_storage_heap.hpp"
+#include "dansandu/math/internal/matrix/data_storage_stack.hpp"
+#include "dansandu/math/internal/matrix/data_storage_view.hpp"
 
 #include <algorithm>
 
@@ -31,8 +31,9 @@ public:
 
     using DataStorage<T, M, N, S>::DataStorage;
 
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             std::enable_if_t<isData(S) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS), int> = 0>
+    template<
+        size_type MM, size_type NN, DataStorageStrategy SS,
+        std::enable_if_t<isContainer(S) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS), int> = 0>
     explicit MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& other)
         : DataStorage<T, M, N, S>{other.rowCount(), other.columnCount(), other.cbegin(), other.cend()}
     {
@@ -73,7 +74,7 @@ public:
     }
 
     template<size_type MM, size_type NN, DataStorageStrategy SS,
-             typename = std::enable_if_t<isData(S) && dimensionsMatch(M, N, MM, NN)>>
+             typename = std::enable_if_t<isContainer(S) && dimensionsMatch(M, N, MM, NN)>>
     auto& operator+=(const MatrixImplementation<T, MM, NN, SS>& other)
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
@@ -105,7 +106,7 @@ public:
     }
 
     template<size_type MM, size_type NN, DataStorageStrategy SS,
-             typename = std::enable_if_t<isData(S) && dimensionsMatch(M, N, MM, NN)>>
+             typename = std::enable_if_t<isContainer(S) && dimensionsMatch(M, N, MM, NN)>>
     auto& operator-=(const MatrixImplementation<T, MM, NN, SS>& other)
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
@@ -136,7 +137,7 @@ public:
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto& operator*=(T scalar)
     {
         std::transform(cbegin(), cend(), begin(), dansandu::math::common::MultiplyBy<T>{scalar});
@@ -150,7 +151,7 @@ public:
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto& operator/=(T scalar)
     {
         std::transform(cbegin(), cend(), begin(), dansandu::math::common::DivideBy<T>{scalar});
@@ -164,7 +165,7 @@ public:
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S) && !isNullMatrix(M, N), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && !isNullMatrix(M, N), TT>>
     auto& operator()(size_type row, size_type column)
     {
         if (canSubscript(rowCount(), columnCount(), row, column))
@@ -206,7 +207,7 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S) && isVector(M, N), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVector(M, N), TT>>
     auto& operator()(size_type coordinate)
     {
         if (canSubscript(rowCount(), columnCount(), coordinate))
@@ -281,7 +282,7 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto& unsafeSubscript(size_type row, size_type column)
     {
         return DataStorage<T, M, N, S>::unsafeSubscript(row, column);
@@ -299,7 +300,7 @@ public:
         return DataStorage<T, M, N, S>::unsafeSubscript(row, column);
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto& unsafeSubscript(size_type coordinate)
     {
         return DataStorage<T, M, N, S>::unsafeSubscript(coordinate);
@@ -317,7 +318,7 @@ public:
         return DataStorage<T, M, N, S>::unsafeSubscript(coordinate);
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S) && isVectorOfMinimumLength(M, N, 1), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVectorOfMinimumLength(M, N, 1), TT>>
     auto& x()
     {
         if (canSubscript(rowCount(), columnCount(), 0))
@@ -356,7 +357,7 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S) && isVectorOfMinimumLength(M, N, 2), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVectorOfMinimumLength(M, N, 2), TT>>
     auto& y()
     {
         if (canSubscript(rowCount(), columnCount(), 1))
@@ -395,7 +396,7 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S) && isVectorOfMinimumLength(M, N, 3), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVectorOfMinimumLength(M, N, 3), TT>>
     auto& z()
     {
         if (canSubscript(rowCount(), columnCount(), 2))
@@ -434,7 +435,7 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S) && isVectorOfMinimumLength(M, N, 4), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVectorOfMinimumLength(M, N, 4), TT>>
     auto& w()
     {
         if (canSubscript(rowCount(), columnCount(), 3))
@@ -473,13 +474,13 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto begin()
     {
         return DataStorage<T, M, N, S>::begin();
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto end()
     {
         return DataStorage<T, M, N, S>::end();
@@ -505,7 +506,7 @@ public:
         return DataStorage<T, M, N, S>::cend();
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isData(S), TT>>
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto data()
     {
         return DataStorage<T, M, N, S>::data();

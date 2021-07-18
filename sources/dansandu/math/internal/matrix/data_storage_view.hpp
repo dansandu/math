@@ -2,9 +2,9 @@
 
 #include "dansandu/ballotin/exception.hpp"
 #include "dansandu/math/common.hpp"
-#include "dansandu/math/internal/common_matrix.hpp"
-#include "dansandu/math/internal/dimensionality_storage.hpp"
-#include "dansandu/math/internal/matrix_view_iterator.hpp"
+#include "dansandu/math/internal/matrix/common.hpp"
+#include "dansandu/math/internal/matrix/dimensionality_storage.hpp"
+#include "dansandu/math/internal/matrix/matrix_view_iterator.hpp"
 
 namespace dansandu::math::matrix
 {

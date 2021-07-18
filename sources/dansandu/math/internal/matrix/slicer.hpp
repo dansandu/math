@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dansandu/math/internal/matrix.hpp"
+#include "dansandu/math/internal/matrix/matrix.hpp"
 
 namespace dansandu::math::matrix
 {
@@ -25,7 +25,7 @@ public:
     }
 
     template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
-    static std::enable_if_t<sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) && isData(S) &&
+    static std::enable_if_t<sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) && isContainer(S) &&
                                 subinterval(BeginRow, Rows, M) && subinterval(BeginColumn, Columns, N),
                             MatrixView<T, Rows, Columns>>
     slice(MatrixImplementation<T, M, N, S>& matrix, A... arguments)

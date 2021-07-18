@@ -1,13 +1,11 @@
 #pragma once
 
-#include "dansandu/math/common.hpp"
-
-#include <vector>
-
 namespace dansandu::math::matrix
 {
 
 using size_type = int;
+
+constexpr auto dynamic = -1;
 
 enum class DataStorageStrategy
 {
@@ -20,9 +18,7 @@ enum class DataStorageStrategy
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
 class DataStorage;
 
-constexpr auto dynamic = -1;
-
-constexpr auto isData(DataStorageStrategy strategy)
+constexpr auto isContainer(DataStorageStrategy strategy)
 {
     return strategy == DataStorageStrategy::stack || strategy == DataStorageStrategy::heap;
 }

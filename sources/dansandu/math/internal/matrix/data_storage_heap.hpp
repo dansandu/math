@@ -2,37 +2,57 @@
 
 #include "dansandu/ballotin/exception.hpp"
 #include "dansandu/math/common.hpp"
-#include "dansandu/math/internal/common_matrix.hpp"
-#include "dansandu/math/internal/dimensionality_storage.hpp"
+#include "dansandu/math/internal/matrix/common.hpp"
+#include "dansandu/math/internal/matrix/dimensionality_storage.hpp"
 
-#include <array>
+#include <vector>
 
 namespace dansandu::math::matrix
 {
 
 template<typename T, size_type M, size_type N>
-class DataStorage<T, M, N, DataStorageStrategy::stack> : private DimensionalityStorage<T, M, N>
+class DataStorage<T, M, N, DataStorageStrategy::heap> : private DimensionalityStorage<T, M, N>
 {
 public:
-    DataStorage() : DimensionalityStorage<T, M, N>{M, N}
+    DataStorage()
     {
-        std::fill(begin(), end(), dansandu::math::common::additiveIdentity<T>);
+        if constexpr (M != dynamic && N != dynamic && M != 0 && N != 0)
+        {
+            data_ = std::vector<T>(M * N, dansandu::math::common::additiveIdentity<T>);
+        }
     }
 
     template<size_type L, typename = std::enable_if_t<isVectorOfLength(M, N, L)>>
-    explicit DataStorage(const T (&array)[L]) : DimensionalityStorage<T, M, N>{M, N}
+    explicit DataStorage(const T (&array)[L]) : data_{array, array + L}
     {
-        std::copy(array, array + L, begin());
+        if constexpr (N == L)
+        {
+            DimensionalityStorage<T, M, N>::setRowCount(1);
+        }
+        else
+        {
+            DimensionalityStorage<T, M, N>::setRowCount(L);
+        }
+
+        if constexpr (M == 1)
+        {
+            DimensionalityStorage<T, M, N>::setColumnCount(L);
+        }
+        else
+        {
+            DimensionalityStorage<T, M, N>::setColumnCount(1);
+        }
     }
 
     template<size_type MM, size_type NN, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
     explicit DataStorage(const T (&array)[MM][NN]) : DimensionalityStorage<T, M, N>{MM, NN}
     {
+        data_.reserve(MM * NN);
         for (auto row = 0; row < MM; ++row)
         {
             for (auto column = 0; column < NN; ++column)
             {
-                unsafeSubscript(row, column) = array[row][column];
+                data_.push_back(array[row][column]);
             }
         }
     }
@@ -40,24 +60,24 @@ public:
     DataStorage(size_type rows, size_type columns, T fillValue = dansandu::math::common::additiveIdentity<T>)
         : DimensionalityStorage<T, M, N>{rows, columns}
     {
-        if ((rows < 0) | (columns < 0) | (M != rows) | (N != columns))
+        if ((rows < 0) | (columns < 0) | ((M != dynamic) & (M != rows)) | ((N != dynamic) & (N != columns)))
         {
             THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
                   " and must match static rows and columns if not dynamic");
         }
-        std::fill(begin(), end(), fillValue);
+        data_ = std::vector<T>(rowCount() * columnCount(), fillValue);
     }
 
     template<typename IteratorBegin, typename IteratorEnd>
     DataStorage(size_type rows, size_type columns, IteratorBegin sourceBegin, IteratorEnd sourceEnd)
         : DimensionalityStorage<T, M, N>{rows, columns}
     {
-        if ((rows < 0) | (columns < 0) | (M != rows) | (N != columns))
+        if ((rows < 0) | (columns < 0) | ((M != dynamic) & (M != rows)) | ((N != dynamic) & (N != columns)))
         {
             THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
                   " and must match static rows and columns if not dynamic");
         }
-        auto iterator = begin();
+        data_.reserve(rowCount() * columnCount());
         auto sourceIterator = sourceBegin;
         for (auto i = 0; i < rowCount() * columnCount(); ++i)
         {
@@ -65,12 +85,32 @@ public:
             {
                 THROW(std::out_of_range, "source underflows matrix");
             }
-            *iterator++ = *sourceIterator++;
+            data_.push_back(*sourceIterator++);
         }
         if (sourceIterator != sourceEnd)
         {
             THROW(std::out_of_range, "source overflows matrix");
         }
+    }
+
+    DataStorage(const DataStorage&) = default;
+
+    DataStorage(DataStorage&& other) noexcept
+        : DimensionalityStorage<T, M, N>{std::move(other)}, data_{std::move(other.data_)}
+    {
+        other.DimensionalityStorage<T, M, N>::setRowCount(0);
+        other.DimensionalityStorage<T, M, N>::setColumnCount(0);
+    }
+
+    DataStorage& operator=(const DataStorage&) = default;
+
+    DataStorage& operator=(DataStorage&& other) noexcept
+    {
+        DimensionalityStorage<T, M, N>::operator=(std::move(other));
+        other.DimensionalityStorage<T, M, N>::setRowCount(0);
+        other.DimensionalityStorage<T, M, N>::setColumnCount(0);
+        data_ = std::move(other.data_);
+        return *this;
     }
 
     auto& unsafeSubscript(size_type row, size_type column)
@@ -164,7 +204,7 @@ private:
         return index;
     }
 
-    std::array<T, M * N> data_;
+    std::vector<T> data_;
 };
 
 }

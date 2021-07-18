@@ -1,10 +1,7 @@
 #pragma once
 
-#include "dansandu/ballotin/exception.hpp"
-#include "dansandu/math/common.hpp"
-#include "dansandu/math/internal/common_matrix.hpp"
-#include "dansandu/math/internal/constant_matrix_view_iterator.hpp"
-#include "dansandu/math/internal/dimensionality_storage.hpp"
+#include "dansandu/math/internal/matrix/constant_matrix_view_iterator.hpp"
+#include "dansandu/math/internal/matrix/dimensionality_storage.hpp"
 
 namespace dansandu::math::matrix
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dansandu/math/internal/matrix_view_iterator.hpp"
+#include "dansandu/math/internal/matrix/matrix_view_iterator.hpp"
 
 #include <iterator>
 

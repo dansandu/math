@@ -1,7 +1,5 @@
 #pragma once
 
-#include "dansandu/math/internal/constant_matrix_view_iterator.hpp"
-
 #include <iterator>
 
 namespace dansandu::math::matrix
