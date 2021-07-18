@@ -37,8 +37,7 @@ public:
         }
     }
 
-    DataStorage(size_type rows, size_type columns, T fillValue = dansandu::math::common::additiveIdentity<T>)
-        : DimensionalityStorage<T, M, N>{rows, columns}
+    DataStorage(size_type rows, size_type columns, const T& fillValue) : DimensionalityStorage<T, M, N>{rows, columns}
     {
         if ((rows < 0) | (columns < 0) | (M != rows) | (N != columns))
         {
