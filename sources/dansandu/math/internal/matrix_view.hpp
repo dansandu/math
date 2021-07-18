@@ -3,7 +3,7 @@
 #include "dansandu/ballotin/exception.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/common_matrix.hpp"
-#include "dansandu/math/internal/constant_matrix_view_iterator.hpp"
+#include "dansandu/math/internal/dimensionality_storage.hpp"
 #include "dansandu/math/internal/matrix_view_iterator.hpp"
 
 namespace dansandu::math::matrix
@@ -16,9 +16,9 @@ public:
     DataStorage(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
                 size_type sourceColumnCount, T* viewBegin)
         : DimensionalityStorage<T, M, N>{viewRowCount, viewColumnCount},
+          viewBegin_{viewBegin},
           sourceRowCount_{sourceRowCount},
-          sourceColumnCount_{sourceColumnCount},
-          viewBegin_{viewBegin}
+          sourceColumnCount_{sourceColumnCount}
     {
     }
 
@@ -54,23 +54,22 @@ public:
 
     auto begin() const
     {
-        return MatrixViewIterator<T>{sourceColumnCount_, columnCount(), viewBegin_};
+        return MatrixViewIterator<T>{viewBegin_, columnCount(), sourceColumnCount_};
     }
 
     auto end() const
     {
-        return MatrixViewIterator<T>{sourceColumnCount_, columnCount(), viewBegin_} + rowCount() * columnCount();
+        return MatrixViewIterator<T>{viewBegin_, columnCount(), sourceColumnCount_} + rowCount() * columnCount();
     }
 
     auto cbegin() const
     {
-        return ConstantMatrixViewIterator<T>{sourceColumnCount_, columnCount(), viewBegin_};
+        return begin();
     }
 
     auto cend() const
     {
-        return ConstantMatrixViewIterator<T>{sourceColumnCount_, columnCount(), viewBegin_} +
-               rowCount() * columnCount();
+        return end();
     }
 
     auto data() const
@@ -96,9 +95,9 @@ private:
         }
     }
 
+    T* viewBegin_;
     size_type sourceRowCount_;
     size_type sourceColumnCount_;
-    T* viewBegin_;
 };
 
 }

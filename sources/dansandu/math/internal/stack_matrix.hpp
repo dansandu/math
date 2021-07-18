@@ -3,6 +3,7 @@
 #include "dansandu/ballotin/exception.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/common_matrix.hpp"
+#include "dansandu/math/internal/dimensionality_storage.hpp"
 
 #include <array>
 

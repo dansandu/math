@@ -17,6 +17,9 @@ enum class DataStorageStrategy
     constantView
 };
 
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+class DataStorage;
+
 constexpr auto dynamic = -1;
 
 constexpr auto isData(DataStorageStrategy strategy)
@@ -61,6 +64,11 @@ constexpr auto dimensionsMatch(size_type m, size_type n, size_type mm, size_type
     return (m == mm || m == dynamic || mm == dynamic) && (n == nn || n == dynamic || nn == dynamic);
 }
 
+constexpr auto strictDimensionsMatch(size_type m, size_type n, size_type mm, size_type nn)
+{
+    return m == mm && n == nn;
+}
+
 constexpr auto canSubscript(size_type m, size_type n, size_type row, size_type column)
 {
     return (0 <= row) & (row < m) & (0 <= column) & (column < n);
@@ -97,116 +105,5 @@ constexpr auto subinterval(size_type a, size_type b, size_type l)
     return (a == dynamic || 0 <= a) && (b == dynamic || 1 <= b) && (l == dynamic || a == dynamic || a <= l) &&
            (l == dynamic || b == dynamic || b <= l) && (l == dynamic || a == dynamic || b == dynamic || a + b <= l);
 }
-
-template<typename T, size_type M, size_type N>
-struct DataStorageStrategyFor
-{
-    constexpr static auto stackBytes = static_cast<size_type>(32);
-
-    constexpr static auto value = (M == dynamic || N == dynamic || M * N * sizeof(T) > stackBytes)
-                                      ? DataStorageStrategy::heap
-                                      : DataStorageStrategy::stack;
-};
-
-template<typename T, size_type M, size_type N>
-struct DimensionalityStorage;
-
-template<typename T, size_type M, size_type N>
-struct DimensionalityStorage
-{
-    DimensionalityStorage()
-    {
-    }
-
-    DimensionalityStorage(size_type, size_type)
-    {
-    }
-
-    auto rowCount() const
-    {
-        return M;
-    }
-
-    auto columnCount() const
-    {
-        return N;
-    }
-};
-
-template<typename T, size_type N>
-struct DimensionalityStorage<T, dynamic, N>
-{
-    DimensionalityStorage() : rows{0}
-    {
-    }
-
-    DimensionalityStorage(size_type r, size_type) : rows{r}
-    {
-    }
-
-    auto rowCount() const
-    {
-        return rows;
-    }
-
-    auto columnCount() const
-    {
-        return N;
-    }
-
-    size_type rows;
-};
-
-template<typename T, size_type M>
-struct DimensionalityStorage<T, M, dynamic>
-{
-    DimensionalityStorage() : columns{0}
-    {
-    }
-
-    DimensionalityStorage(size_type, size_type c) : columns{c}
-    {
-    }
-
-    auto rowCount() const
-    {
-        return M;
-    }
-
-    auto columnCount() const
-    {
-        return columns;
-    }
-
-    size_type columns;
-};
-
-template<typename T>
-struct DimensionalityStorage<T, dynamic, dynamic>
-{
-    DimensionalityStorage() : rows{0}, columns{0}
-    {
-    }
-
-    DimensionalityStorage(size_type r, size_type c) : rows{r}, columns{c}
-    {
-    }
-
-    auto rowCount() const
-    {
-        return rows;
-    }
-
-    auto columnCount() const
-    {
-        return columns;
-    }
-
-    size_type rows;
-    size_type columns;
-};
-
-template<typename T, size_type M, size_type N, DataStorageStrategy S>
-class DataStorage;
 
 }

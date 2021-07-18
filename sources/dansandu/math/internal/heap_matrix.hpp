@@ -3,6 +3,7 @@
 #include "dansandu/ballotin/exception.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/common_matrix.hpp"
+#include "dansandu/math/internal/dimensionality_storage.hpp"
 
 #include <vector>
 
@@ -24,28 +25,22 @@ public:
     template<size_type L, typename = std::enable_if_t<isVectorOfLength(M, N, L)>>
     explicit DataStorage(const T (&array)[L]) : data_{array, array + L}
     {
-        if constexpr (M == dynamic)
+        if constexpr (N == L)
         {
-            if constexpr (N == L)
-            {
-                DimensionalityStorage<T, M, N>::rows = 1;
-            }
-            else
-            {
-                DimensionalityStorage<T, M, N>::rows = L;
-            }
+            DimensionalityStorage<T, M, N>::setRowCount(1);
+        }
+        else
+        {
+            DimensionalityStorage<T, M, N>::setRowCount(L);
         }
 
-        if constexpr (N == dynamic)
+        if constexpr (M == 1)
         {
-            if constexpr (M == 1)
-            {
-                DimensionalityStorage<T, M, N>::columns = L;
-            }
-            else
-            {
-                DimensionalityStorage<T, M, N>::columns = 1;
-            }
+            DimensionalityStorage<T, M, N>::setColumnCount(L);
+        }
+        else
+        {
+            DimensionalityStorage<T, M, N>::setColumnCount(1);
         }
     }
 
@@ -96,6 +91,26 @@ public:
         {
             THROW(std::out_of_range, "source overflows matrix");
         }
+    }
+
+    DataStorage(const DataStorage&) = default;
+
+    DataStorage(DataStorage&& other) noexcept
+        : DimensionalityStorage<T, M, N>{std::move(other)}, data_{std::move(other.data_)}
+    {
+        other.DimensionalityStorage<T, M, N>::setRowCount(0);
+        other.DimensionalityStorage<T, M, N>::setColumnCount(0);
+    }
+
+    DataStorage& operator=(const DataStorage&) = default;
+
+    DataStorage& operator=(DataStorage&& other) noexcept
+    {
+        DimensionalityStorage<T, M, N>::operator=(std::move(other));
+        other.DimensionalityStorage<T, M, N>::setRowCount(0);
+        other.DimensionalityStorage<T, M, N>::setColumnCount(0);
+        data_ = std::move(other.data_);
+        return *this;
     }
 
     auto& unsafeSubscript(size_type row, size_type column)

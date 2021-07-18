@@ -31,11 +31,29 @@ public:
 
     using DataStorage<T, M, N, S>::DataStorage;
 
-    template<
-        size_type MM, size_type NN, DataStorageStrategy SS,
-        typename = std::enable_if_t<isData(S) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || !isData(SS))>>
-    explicit MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& source)
-        : DataStorage<T, M, N, S>{source.rowCount(), source.columnCount(), source.cbegin(), source.cend()}
+    template<size_type MM, size_type NN, DataStorageStrategy SS,
+             std::enable_if_t<isData(S) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS), int> = 0>
+    explicit MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& other)
+        : DataStorage<T, M, N, S>{other.rowCount(), other.columnCount(), other.cbegin(), other.cend()}
+    {
+    }
+
+    template<size_type MM, size_type NN, DataStorageStrategy SS,
+             std::enable_if_t<isView(S) && !isConstantView(SS) && dimensionsMatch(M, N, MM, NN) &&
+                                  (M != MM || N != NN || S != SS),
+                              int> = 0>
+    MatrixImplementation(MatrixImplementation<T, MM, NN, SS>& other)
+        : DataStorage<T, M, N, S>{other.rowCount(), other.columnCount(), other.sourceRowCount(),
+                                  other.sourceColumnCount(), other.data()}
+    {
+    }
+
+    template<size_type MM, size_type NN, DataStorageStrategy SS,
+             std::enable_if_t<isConstantView(S) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS),
+                              int> = 0>
+    MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& other)
+        : DataStorage<T, M, N, S>{other.rowCount(), other.columnCount(), other.sourceRowCount(),
+                                  other.sourceColumnCount(), other.data()}
     {
     }
 
@@ -259,7 +277,7 @@ public:
         }
         else
         {
-            THROW(std::logic_error, "cannot get the length of non-vector matrix");
+            THROW(std::logic_error, "cannot get the length of a matrix that is not a vector");
         }
     }
 
@@ -496,19 +514,6 @@ public:
     auto data() const
     {
         return DataStorage<T, M, N, S>::data();
-    }
-
-    template<size_type MM, size_type NN, typename = std::enable_if_t<isData(S) && dimensionsMatch(M, N, MM, NN)>>
-    operator MatrixImplementation<T, MM, NN, DataStorageStrategy::view>()
-    {
-        return {rowCount(), columnCount(), rowCount(), columnCount(), DataStorage<T, M, N, S>::data()};
-    }
-
-    template<size_type MM, size_type NN,
-             typename = std::enable_if_t<(isData(S) || isView(S)) && dimensionsMatch(M, N, MM, NN)>>
-    operator MatrixImplementation<T, MM, NN, DataStorageStrategy::constantView>() const
-    {
-        return {rowCount(), columnCount(), rowCount(), columnCount(), DataStorage<T, M, N, S>::data()};
     }
 };
 

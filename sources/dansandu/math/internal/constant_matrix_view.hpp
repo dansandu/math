@@ -4,6 +4,7 @@
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/common_matrix.hpp"
 #include "dansandu/math/internal/constant_matrix_view_iterator.hpp"
+#include "dansandu/math/internal/dimensionality_storage.hpp"
 
 namespace dansandu::math::matrix
 {
@@ -15,9 +16,9 @@ public:
     DataStorage(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
                 size_type sourceColumnCount, const T* viewBegin)
         : DimensionalityStorage<T, M, N>{viewRowCount, viewColumnCount},
+          viewBegin_{viewBegin},
           sourceRowCount_{sourceRowCount},
-          sourceColumnCount_{sourceColumnCount},
-          viewBegin_{viewBegin}
+          sourceColumnCount_{sourceColumnCount}
     {
     }
 
@@ -53,12 +54,12 @@ public:
 
     auto begin() const
     {
-        return ConstantMatrixViewIterator<T>{sourceColumnCount_, columnCount(), viewBegin_};
+        return ConstantMatrixViewIterator<T>{viewBegin_, columnCount(), sourceColumnCount_};
     }
 
     auto end() const
     {
-        return ConstantMatrixViewIterator<T>{sourceColumnCount_, columnCount(), viewBegin_} +
+        return ConstantMatrixViewIterator<T>{viewBegin_, columnCount(), sourceColumnCount_} +
                rowCount() * columnCount();
     }
 
@@ -95,9 +96,9 @@ private:
         }
     }
 
+    const T* viewBegin_;
     size_type sourceRowCount_;
     size_type sourceColumnCount_;
-    const T* viewBegin_;
 };
 
 }
