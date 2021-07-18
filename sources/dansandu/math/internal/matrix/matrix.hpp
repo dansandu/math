@@ -206,6 +206,16 @@ public:
         return *this;
     }
 
+    auto operator-() const
+    {
+        auto copy = MatrixImplementation<T, M, N, DataStorageStrategyFor<T, M, N>::value>{*this};
+        for (auto& element : copy)
+        {
+            element *= -dansandu::math::common::multiplicativeIdentity<T>;
+        }
+        return copy;
+    }
+
     template<typename TT = T, typename = std::enable_if_t<isContainer(S) && !isNullMatrix(M, N), TT>>
     auto& operator()(size_type row, size_type column)
     {

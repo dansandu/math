@@ -492,6 +492,28 @@ TEST_CASE("matrix")
         }
     }
 
+    SECTION("additive inverse")
+    {
+        SECTION("container")
+        {
+            const auto expected = Matrix<int, 3, 1>{{-1, -2, -3}};
+            const auto matrix = Matrix<int, 3, 1>{{1, 2, 3}};
+            const auto actual = -matrix;
+
+            REQUIRE(actual == expected);
+        }
+
+        SECTION("view")
+        {
+            const auto expected = Matrix<int>{{{-1, -2, -3}, {-4, -5, -6}}};
+            const auto matrix = Matrix<int>{{{1, 2, 3}, {4, 5, 6}}};
+            const auto view = ConstantMatrixView<int>{matrix};
+            const auto actual = -view;
+
+            REQUIRE(actual == expected);
+        }
+    }
+
     SECTION("slicing")
     {
         SECTION("data to view")
