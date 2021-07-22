@@ -206,15 +206,7 @@ public:
         return *this;
     }
 
-    auto operator-() const
-    {
-        auto copy = MatrixImplementation<T, M, N, DataStorageStrategyFor<T, M, N>::value>{*this};
-        for (auto& element : copy)
-        {
-            element *= -dansandu::math::common::multiplicativeIdentity<T>;
-        }
-        return copy;
-    }
+    auto operator-() const;
 
     template<typename TT = T, typename = std::enable_if_t<isContainer(S) && !isNullMatrix(M, N), TT>>
     auto& operator()(size_type row, size_type column)
@@ -627,6 +619,15 @@ auto operator*(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementa
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
+auto MatrixImplementation<T, M, N, S>::operator-() const
+{
+    auto copy = Matrix<T, M, N>{*this};
+    std::transform(cbegin(), cend(), copy.begin(),
+                   dansandu::math::common::MultiplyBy<T>{-dansandu::math::common::multiplicativeIdentity<T>});
+    return copy;
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
 auto operator*(const MatrixImplementation<T, M, N, S>& matrix, T scalar)
 {
     auto result = Matrix<T, M, N>{matrix};
@@ -654,6 +655,13 @@ auto operator-(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementa
 {
     auto result = NormalizedMatrix<T, M, N, MM, NN>{a};
     return result -= b;
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+auto operator/(const MatrixImplementation<T, M, N, S>& matrix, const T& scalar)
+{
+    auto result = Matrix<T, M, N>{matrix};
+    return result /= scalar;
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, typename = std::enable_if_t<isVector(M, N)>>

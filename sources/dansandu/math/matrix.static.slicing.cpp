@@ -15,28 +15,130 @@ TEST_CASE("matrix.static.slicing")
 
     SECTION("view")
     {
-        const auto view = Slicer<1, 1, 2, 3>::slice(matrix);
+        const auto view = Slicer<1, 1, 1, 3>::slice(matrix);
 
-        REQUIRE(view.rowCount() == 2);
-
-        REQUIRE(view.columnCount() == 3);
-
-        SECTION("unmutated")
+        SECTION("data")
         {
-            const auto expected = std::vector<int>{{6, 7, 8, 10, 11, 12}};
+            REQUIRE(view.rowCount() == 1);
+
+            REQUIRE(view.columnCount() == 3);
+
+            const auto expected = std::vector<int>{{6, 7, 8}};
             const auto actual = std::vector<int>{view.cbegin(), view.cend()};
 
             REQUIRE(actual == expected);
         }
 
-        SECTION("mutated")
+        SECTION("subscript")
         {
-            view(0, 2) = 0;
+            view.x() = 100;
 
-            const auto expectedMatrix = std::vector<int>{{1, 2, 3, 4, 5, 6, 7, 0, 9, 10, 11, 12}};
-            const auto expectedView = std::vector<int>{{6, 7, 0, 10, 11, 12}};
+            view(1) = 200;
+
+            view(0, 2) = 300;
+
+            const auto expectedMatrix = std::vector<int>{{1, 2, 3, 4, 5, 100, 200, 300, 9, 10, 11, 12}};
+            const auto expectedView = std::vector<int>{{100, 200, 300}};
 
             REQUIRE(std::vector<int>{matrix.cbegin(), matrix.cend()} == expectedMatrix);
+
+            REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == expectedView);
+        }
+
+        SECTION("addition")
+        {
+            const auto other = Matrix<int, 1, 3>{{100, 200, 300}};
+
+            view += other;
+
+            const auto expectedMatrix = std::vector<int>{{1, 2, 3, 4, 5, 106, 207, 308, 9, 10, 11, 12}};
+            const auto expectedView = std::vector<int>{{106, 207, 308}};
+
+            REQUIRE(std::vector<int>{matrix.cbegin(), matrix.cend()} == expectedMatrix);
+
+            REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == expectedView);
+        }
+
+        SECTION("subtraction")
+        {
+            const auto other = Matrix<int, 1, 3>{{100, 200, 300}};
+
+            view -= other;
+
+            const auto expectedMatrix = std::vector<int>{{1, 2, 3, 4, 5, -94, -193, -292, 9, 10, 11, 12}};
+            const auto expectedView = std::vector<int>{{-94, -193, -292}};
+
+            REQUIRE(std::vector<int>{matrix.cbegin(), matrix.cend()} == expectedMatrix);
+
+            REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == expectedView);
+        }
+
+        SECTION("additive inverse")
+        {
+            const auto other = -view;
+
+            const auto expectedOther = std::vector<int>{{-6, -7, -8}};
+
+            REQUIRE(std::vector<int>{other.cbegin(), other.cend()} == expectedOther);
+
+            const auto expectedView = std::vector<int>{{6, 7, 8}};
+
+            REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == expectedView);
+
+            const auto expectedMatrix = std::vector<int>{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}};
+
+            REQUIRE(std::vector<int>{matrix.cbegin(), matrix.cend()} == expectedMatrix);
+        }
+
+        SECTION("multiplication")
+        {
+            const auto matrix = Matrix<int, 3, 2>{{{10, 100}, {20, 200}, {30, 300}}};
+
+            const auto result = view * matrix;
+
+            REQUIRE(result.rowCount() == 1);
+
+            REQUIRE(result.columnCount() == 2);
+
+            const auto expectedResult = std::vector<int>{{440, 4400}};
+
+            REQUIRE(std::vector<int>{result.cbegin(), result.cend()} == expectedResult);
+
+            const auto expectedView = std::vector<int>{{6, 7, 8}};
+
+            REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == expectedView);
+        }
+
+        SECTION("scalar multiplication")
+        {
+            const auto result = 10 * view;
+
+            REQUIRE(result.rowCount() == 1);
+
+            REQUIRE(result.columnCount() == 3);
+
+            const auto expectedResult = std::vector<int>{{60, 70, 80}};
+
+            REQUIRE(std::vector<int>{result.cbegin(), result.cend()} == expectedResult);
+
+            const auto expectedView = std::vector<int>{{6, 7, 8}};
+
+            REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == expectedView);
+        }
+
+        SECTION("scalar division")
+        {
+            const auto result = view / 2;
+
+            REQUIRE(result.rowCount() == 1);
+
+            REQUIRE(result.columnCount() == 3);
+
+            const auto expectedResult = std::vector<int>{{3, 3, 4}};
+
+            REQUIRE(std::vector<int>{result.cbegin(), result.cend()} == expectedResult);
+
+            const auto expectedView = std::vector<int>{{6, 7, 8}};
 
             REQUIRE(std::vector<int>{view.cbegin(), view.cend()} == expectedView);
         }
