@@ -1,5 +1,5 @@
-#include "catchorg/catch/catch.hpp"
 #include "dansandu/math/matrix.hpp"
+#include "catchorg/catch/catch.hpp"
 
 using dansandu::math::matrix::ConstantMatrixView;
 using dansandu::math::matrix::dynamic;

@@ -1,5 +1,5 @@
-#include "catchorg/catch/catch.hpp"
 #include "dansandu/math/clustering.hpp"
+#include "catchorg/catch/catch.hpp"
 #include "dansandu/math/matrix.hpp"
 
 using dansandu::math::clustering::testKmeans;

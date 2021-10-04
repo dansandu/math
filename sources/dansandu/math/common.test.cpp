@@ -1,5 +1,5 @@
-#include "catchorg/catch/catch.hpp"
 #include "dansandu/math/common.hpp"
+#include "catchorg/catch/catch.hpp"
 
 using dansandu::math::common::close;
 

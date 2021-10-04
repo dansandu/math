@@ -30,8 +30,8 @@ std::pair<Matrix<float>, std::vector<int>> kMeans(const ConstantMatrixView<float
 
     auto centroids = Matrix<float>{clusters, samples.columnCount()};
     integers(0, 1, samples.rowCount()) | shuffle(generator) | take(clusters) |
-        forEach(
-            [i = 0, &samples, &centroids](auto j) mutable { sliceRow(centroids, i++).deepCopy(sliceRow(samples, j)); });
+        forEach([i = 0, &samples, &centroids](auto j) mutable
+                { sliceRow(centroids, i++).deepCopy(sliceRow(samples, j)); });
 
     auto labels = std::vector<int>(samples.rowCount());
     for (auto iteration = 0; iteration < iterations; ++iteration)
