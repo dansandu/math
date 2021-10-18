@@ -14,6 +14,9 @@ template<typename T, size_type M, size_type N>
 class DataStorage<T, M, N, DataStorageStrategy::heap> : private DimensionalityStorage<T, M, N>
 {
 public:
+    using iterator = typename std::vector<T>::iterator;
+    using const_iterator = typename std::vector<T>::const_iterator;
+
     DataStorage()
     {
         if constexpr (M != dynamic && N != dynamic && M != 0 && N != 0)

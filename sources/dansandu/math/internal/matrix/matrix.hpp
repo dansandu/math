@@ -22,6 +22,8 @@ public:
     static_assert((M == 0) == (N == 0), "zero static rows imply zero static columns and vice-versa");
 
     using value_type = T;
+    using iterator = typename DataStorage<T, M, N, S>::iterator;
+    using const_iterator = typename DataStorage<T, M, N, S>::const_iterator;
 
     static constexpr auto staticRowCount = M;
 
@@ -780,6 +782,36 @@ bool close(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation
     return a.rowCount() == b.rowCount() && a.columnCount() == b.columnCount() &&
            std::equal(a.cbegin(), a.cend(), b.cbegin(), b.cend(),
                       [epsilon](auto l, auto r) { return std::abs(l - r) < epsilon; });
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+std::ostream& operator<<(std::ostream& stream, const MatrixImplementation<T, M, N, S>& matrix)
+{
+    auto printRow = [&](auto row)
+    {
+        stream << "{";
+        if (matrix.columnCount() > 0)
+        {
+            stream << matrix.unsafeSubscript(row, 0);
+        }
+        for (auto column = 1; column < matrix.columnCount(); ++column)
+        {
+            stream << ", " << matrix.unsafeSubscript(row, column);
+        }
+        stream << "}";
+    };
+
+    stream << "{";
+    if (matrix.rowCount() > 0)
+    {
+        printRow(0);
+    }
+    for (auto row = 1; row < matrix.rowCount(); ++row)
+    {
+        stream << ", ";
+        printRow(row);
+    }
+    return stream << "}";
 }
 
 }

@@ -13,6 +13,9 @@ template<typename T, size_type M, size_type N>
 class DataStorage<T, M, N, DataStorageStrategy::view> : private DimensionalityStorage<T, M, N>
 {
 public:
+    using iterator = MatrixViewIterator<T>;
+    using const_iterator = ConstantMatrixViewIterator<T>;
+
     DataStorage(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
                 size_type sourceColumnCount, T* viewBegin)
         : DimensionalityStorage<T, M, N>{viewRowCount, viewColumnCount},
@@ -64,12 +67,13 @@ public:
 
     auto cbegin() const
     {
-        return begin();
+        return ConstantMatrixViewIterator<T>{viewBegin_, columnCount(), sourceColumnCount_};
     }
 
     auto cend() const
     {
-        return end();
+        return ConstantMatrixViewIterator<T>{viewBegin_, columnCount(), sourceColumnCount_} +
+               rowCount() * columnCount();
     }
 
     auto data() const

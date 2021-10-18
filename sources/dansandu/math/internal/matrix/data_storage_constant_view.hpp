@@ -10,6 +10,9 @@ template<typename T, size_type M, size_type N>
 class DataStorage<T, M, N, DataStorageStrategy::constantView> : private DimensionalityStorage<T, M, N>
 {
 public:
+    using iterator = ConstantMatrixViewIterator<T>;
+    using const_iterator = ConstantMatrixViewIterator<T>;
+
     DataStorage(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
                 size_type sourceColumnCount, const T* viewBegin)
         : DimensionalityStorage<T, M, N>{viewRowCount, viewColumnCount},

@@ -14,6 +14,9 @@ template<typename T, size_type M, size_type N>
 class DataStorage<T, M, N, DataStorageStrategy::stack> : private DimensionalityStorage<T, M, N>
 {
 public:
+    using iterator = typename std::array<T, M * N>::iterator;
+    using const_iterator = typename std::array<T, M * N>::const_iterator;
+
     DataStorage() : DimensionalityStorage<T, M, N>{M, N}
     {
         std::fill(begin(), end(), dansandu::math::common::additiveIdentity<T>);
