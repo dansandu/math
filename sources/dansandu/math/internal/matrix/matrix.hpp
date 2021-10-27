@@ -53,6 +53,12 @@ public:
     {
     }
 
+    template<typename TT = T, typename = std::enable_if_t<isHeapContainer(S), TT>>
+    MatrixImplementation(size_type rows, size_type columns, std::vector<T> buffer)
+        : dataStorage_{rows, columns, std::move(buffer)}
+    {
+    }
+
     template<typename IteratorBegin, typename IteratorEnd, typename TT = T,
              typename = std::enable_if_t<isContainer(S), TT>>
     MatrixImplementation(size_type rows, size_type columns, IteratorBegin sourceBegin, IteratorEnd sourceEnd)

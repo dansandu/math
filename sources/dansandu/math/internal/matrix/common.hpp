@@ -23,6 +23,11 @@ constexpr auto isContainer(DataStorageStrategy strategy)
     return strategy == DataStorageStrategy::stack || strategy == DataStorageStrategy::heap;
 }
 
+constexpr auto isHeapContainer(DataStorageStrategy strategy)
+{
+    return strategy == DataStorageStrategy::heap;
+}
+
 constexpr auto isView(DataStorageStrategy strategy)
 {
     return strategy == DataStorageStrategy::view;

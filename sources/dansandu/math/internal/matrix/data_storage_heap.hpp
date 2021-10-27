@@ -95,6 +95,22 @@ public:
         }
     }
 
+    DataStorage(size_type rows, size_type columns, std::vector<T> buffer)
+        : DimensionalityStorage<T, M, N>{rows, columns}, data_{std::move(buffer)}
+    {
+        if ((rows < 0) | (columns < 0) | ((M != dynamic) & (M != rows)) | ((N != dynamic) & (N != columns)))
+        {
+            THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
+                  " and must match static rows and columns if not dynamic");
+        }
+
+        if (rowCount() * columnCount() != static_cast<size_type>(data_.size()))
+        {
+            THROW(std::out_of_range, "buffer size ", data_.size(), " doesn't match matrix dimensions ", rows, "x",
+                  columns);
+        }
+    }
+
     DataStorage(const DataStorage&) = default;
 
     DataStorage(DataStorage&& other) noexcept
