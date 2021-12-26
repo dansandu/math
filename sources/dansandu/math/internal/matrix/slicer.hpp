@@ -41,14 +41,11 @@ private:
     template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
     static auto unpackArguments(const MatrixImplementation<T, M, N, S>& matrix, A... arguments)
     {
-        size_type index = 0;
-        size_type unpacked[4] = {0};
-        (..., (unpacked[index++] = arguments));
-        index = 0;
+        size_type unpacked[] = {arguments...};
 
+        auto index = 0;
         const auto viewBeginRow = BeginRow != dynamic ? BeginRow : unpacked[index++];
         const auto viewBeginColumn = BeginColumn != dynamic ? BeginColumn : unpacked[index++];
-
         const auto viewRows = Rows != dynamic ? Rows : unpacked[index++];
         const auto viewColumns = Columns != dynamic ? Columns : unpacked[index++];
 
