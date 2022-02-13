@@ -139,7 +139,7 @@ constexpr auto multiplicativeIdentity = NumericTraits<T>::multiplicative_identit
 template<typename T>
 constexpr auto pi = NumericTraits<T>::pi;
 
-template<typename T>
+template<typename T, typename = std::enable_if_t<std::is_floating_point_v<T>, T>>
 constexpr auto close(T lhs, T rhs, T epsilon)
 {
     return std::abs(lhs - rhs) < epsilon;
