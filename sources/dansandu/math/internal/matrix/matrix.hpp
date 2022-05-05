@@ -781,6 +781,20 @@ auto crossProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImpleme
     return Matrix<T, 3, 1>{{x, y, z}};
 }
 
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+auto transposed(const MatrixImplementation<T, M, N, S>& matrix)
+{
+    auto result = Matrix<T, N, M>{matrix.columnCount(), matrix.rowCount()};
+    for (auto i = 0; i < matrix.rowCount(); ++i)
+    {
+        for (auto j = 0; j < matrix.columnCount(); ++j)
+        {
+            result(j, i) = matrix(i, j);
+        }
+    }
+    return result;
+}
+
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
          DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
 bool close(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b, const T epsilon)
