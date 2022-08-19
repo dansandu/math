@@ -672,6 +672,36 @@ auto operator/(const MatrixImplementation<T, M, N, S>& matrix, const T& scalar)
     return result /= scalar;
 }
 
+template<typename T>
+auto identity(const size_type rows, const size_type columns)
+{
+    auto result = Matrix<T>{rows, columns};
+    const auto diagonal = std::min(rows, columns);
+    for (auto i = 0; i < diagonal; ++i)
+    {
+        result(i, i) = dansandu::math::common::multiplicativeIdentity<T>;
+    }
+    return result;
+}
+
+template<typename T>
+auto identity(const size_type rows)
+{
+    return identity<T>(rows, rows);
+}
+
+template<typename T, size_type M, size_type N = M>
+auto identity()
+{
+    auto result = Matrix<T, M, N>{};
+    const auto diagonal = std::min(M, N);
+    for (auto i = 0; i < diagonal; ++i)
+    {
+        result(i, i) = dansandu::math::common::multiplicativeIdentity<T>;
+    }
+    return result;
+}
+
 template<typename T, size_type M, size_type N, DataStorageStrategy S, typename = std::enable_if_t<isVector(M, N)>>
 auto magnitude(const MatrixImplementation<T, M, N, S>& matrix)
 {
@@ -774,9 +804,9 @@ auto crossProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImpleme
         }
     }
 
-    const auto x = a.unsafeSubscript(1) * b.unsafeSubscript(2) - b.unsafeSubscript(1) * a.unsafeSubscript(2);
-    const auto y = b.unsafeSubscript(0) * a.unsafeSubscript(2) - a.unsafeSubscript(0) * b.unsafeSubscript(2);
-    const auto z = a.unsafeSubscript(0) * b.unsafeSubscript(1) - b.unsafeSubscript(0) * a.unsafeSubscript(1);
+    const auto x = a.unsafeSubscript(1) * b.unsafeSubscript(2) - a.unsafeSubscript(2) * b.unsafeSubscript(1);
+    const auto y = a.unsafeSubscript(2) * b.unsafeSubscript(0) - a.unsafeSubscript(0) * b.unsafeSubscript(2);
+    const auto z = a.unsafeSubscript(0) * b.unsafeSubscript(1) - a.unsafeSubscript(1) * b.unsafeSubscript(0);
 
     return Matrix<T, 3, 1>{{x, y, z}};
 }
