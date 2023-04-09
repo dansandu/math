@@ -62,7 +62,7 @@ public:
 
     DataStorage(size_type rows, size_type columns, const T& fillValue) : DimensionalityStorage<T, M, N>{rows, columns}
     {
-        if ((rows < 0) | (columns < 0) | ((M != dynamic) & (M != rows)) | ((N != dynamic) & (N != columns)))
+        if (rows < 0 || columns < 0 || (M != dynamic && M != rows) || (N != dynamic && N != columns))
         {
             THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
                   " and must match static rows and columns if not dynamic");
@@ -74,7 +74,7 @@ public:
     DataStorage(size_type rows, size_type columns, IteratorBegin sourceBegin, IteratorEnd sourceEnd)
         : DimensionalityStorage<T, M, N>{rows, columns}
     {
-        if ((rows < 0) | (columns < 0) | ((M != dynamic) & (M != rows)) | ((N != dynamic) & (N != columns)))
+        if (rows < 0 || columns < 0 || (M != dynamic && M != rows) || (N != dynamic && N != columns))
         {
             THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
                   " and must match static rows and columns if not dynamic");
@@ -98,7 +98,7 @@ public:
     DataStorage(size_type rows, size_type columns, std::vector<T> buffer)
         : DimensionalityStorage<T, M, N>{rows, columns}, data_{std::move(buffer)}
     {
-        if ((rows < 0) | (columns < 0) | ((M != dynamic) & (M != rows)) | ((N != dynamic) & (N != columns)))
+        if (rows < 0 || columns < 0 || (M != dynamic && M != rows) || (N != dynamic && N != columns))
         {
             THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
                   " and must match static rows and columns if not dynamic");

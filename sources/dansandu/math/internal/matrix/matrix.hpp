@@ -113,7 +113,7 @@ public:
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
         {
-            if ((rowCount() != other.rowCount()) | (columnCount() != other.columnCount()))
+            if (!matrixDimensionsMatch(*this, other))
             {
                 THROW(std::logic_error, "cannot copy matrices ", rowCount(), "x", columnCount(), " and ",
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
@@ -128,7 +128,7 @@ public:
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
         {
-            if ((rowCount() != other.rowCount()) | (columnCount() != other.columnCount()))
+            if (!matrixDimensionsMatch(*this, other))
             {
                 THROW(std::logic_error, "cannot add matrices ", rowCount(), "x", columnCount(), " and ",
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
@@ -144,7 +144,7 @@ public:
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
         {
-            if ((rowCount() != other.rowCount()) | (columnCount() != other.columnCount()))
+            if (!matrixDimensionsMatch(*this, other))
             {
                 THROW(std::logic_error, "cannot add matrices ", rowCount(), "x", columnCount(), " and ",
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
@@ -160,7 +160,7 @@ public:
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
         {
-            if ((rowCount() != other.rowCount()) | (columnCount() != other.columnCount()))
+            if (!matrixDimensionsMatch(*this, other))
             {
                 THROW(std::logic_error, "cannot subtract matrices ", rowCount(), "x", columnCount(), " and ",
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
@@ -176,7 +176,7 @@ public:
     {
         if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
         {
-            if ((rowCount() != other.rowCount()) | (columnCount() != other.columnCount()))
+            if (!matrixDimensionsMatch(*this, other))
             {
                 THROW(std::logic_error, "cannot subtract matrices ", rowCount(), "x", columnCount(), " and ",
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
@@ -589,7 +589,7 @@ template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type 
          DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN) && std::is_integral_v<T>>>
 bool operator==(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
-    return ((a.rowCount() == b.rowCount()) & (a.columnCount() == b.columnCount())) &&
+    return a.rowCount() == b.rowCount() && a.columnCount() == b.columnCount() &&
            std::equal(a.cbegin(), a.cend(), b.cbegin());
 }
 
@@ -707,7 +707,7 @@ auto magnitude(const MatrixImplementation<T, M, N, S>& matrix)
 {
     if constexpr (M == dynamic || N == dynamic)
     {
-        if ((matrix.rowCount() != 1) & (matrix.columnCount() != 1))
+        if (matrix.rowCount() != 1 && matrix.columnCount() != 1)
         {
             THROW(std::logic_error, "cannot get the magnitude of non-vector matrix ", matrix.rowCount(), "x",
                   matrix.columnCount());
@@ -726,7 +726,7 @@ auto normalized(const MatrixImplementation<T, M, N, S>& matrix)
 {
     if constexpr (M == dynamic || N == dynamic)
     {
-        if ((matrix.rowCount() != 1) & (matrix.columnCount() != 1))
+        if (matrix.rowCount() != 1 && matrix.columnCount() != 1)
         {
             THROW(std::logic_error, "cannot get the norm of non-vector matrix ", matrix.rowCount(), "x",
                   matrix.columnCount());
@@ -746,8 +746,7 @@ auto dotProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplement
 {
     if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
     {
-        if (((a.rowCount() != 1) & (a.columnCount() != 1)) | ((b.rowCount() != 1) & (b.columnCount() != 1)) |
-            ((a.rowCount() * a.columnCount() != b.rowCount() * b.columnCount())))
+        if (!vectorsOfEqualLength(a, b))
         {
             THROW(std::logic_error, "cannot get the dot product of matrices ", a.rowCount(), "x", a.columnCount(),
                   " and ", b.rowCount(), "x", b.columnCount());
@@ -769,8 +768,7 @@ auto distance(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementat
 {
     if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
     {
-        if (((a.rowCount() != 1) & (a.columnCount() != 1)) | ((b.rowCount() != 1) & (b.columnCount() != 1)) |
-            ((a.rowCount() * a.columnCount() != b.rowCount() * b.columnCount())))
+        if (!vectorsOfEqualLength(a, b))
         {
             THROW(std::logic_error, "cannot get the distance of matrices ", a.rowCount(), "x", a.columnCount(), " and ",
                   b.rowCount(), "x", b.columnCount());
@@ -796,8 +794,7 @@ auto crossProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImpleme
 {
     if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
     {
-        if (((a.rowCount() != 1) & (a.columnCount() != 1)) | ((b.rowCount() != 1) & (b.columnCount() != 1)) |
-            (a.rowCount() * a.columnCount() != 3) | (b.rowCount() * b.columnCount() != 3))
+        if (!vectorsOfEqualLength(a, b) && a.length() == 3)
         {
             THROW(std::logic_error, "cannot get the cross product of matrices ", a.rowCount(), "x", a.columnCount(),
                   " and ", b.rowCount(), "x", b.columnCount());
@@ -829,9 +826,8 @@ template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type 
          DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
 bool close(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b, const T epsilon)
 {
-    return a.rowCount() == b.rowCount() && a.columnCount() == b.columnCount() &&
-           std::equal(a.cbegin(), a.cend(), b.cbegin(), b.cend(),
-                      [epsilon](auto l, auto r) { return std::abs(l - r) < epsilon; });
+    return matrixDimensionsMatch(a, b) && std::equal(a.cbegin(), a.cend(), b.cbegin(), b.cend(),
+                                                     [epsilon](auto l, auto r) { return std::abs(l - r) < epsilon; });
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>

@@ -18,6 +18,26 @@ enum class DataStorageStrategy
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
 class DataStorage;
 
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+class MatrixImplementation;
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+         DataStorageStrategy SS>
+constexpr auto matrixDimensionsMatch(const MatrixImplementation<T, M, N, S>& a,
+                                     const MatrixImplementation<T, MM, NN, SS>& b)
+{
+    return a.rowCount() == b.rowCount() && a.columnCount() == b.columnCount();
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+         DataStorageStrategy SS>
+constexpr auto vectorsOfEqualLength(const MatrixImplementation<T, M, N, S>& a,
+                                    const MatrixImplementation<T, MM, NN, SS>& b)
+{
+    return (a.rowCount() == 1 || a.columnCount() == 1) && (b.rowCount() == 1 || b.columnCount() == 1) &&
+           a.length() == b.length();
+}
+
 constexpr auto isContainer(DataStorageStrategy strategy)
 {
     return strategy == DataStorageStrategy::stack || strategy == DataStorageStrategy::heap;
@@ -72,12 +92,12 @@ constexpr auto strictDimensionsMatch(size_type m, size_type n, size_type mm, siz
 
 constexpr auto canSubscript(size_type m, size_type n, size_type row, size_type column)
 {
-    return (0 <= row) & (row < m) & (0 <= column) & (column < n);
+    return 0 <= row && row < m && 0 <= column && column < n;
 }
 
 constexpr auto canSubscript(size_type m, size_type n, size_type index)
 {
-    return (0 <= index) & (((m == 1) & (index < n)) | ((index < m) & (n == 1)));
+    return 0 <= index && ((m == 1 && index < n) || (index < m && n == 1));
 }
 
 constexpr auto vectorsOfLength3(size_type m, size_type n, size_type mm, size_type nn)
