@@ -88,10 +88,10 @@ public:
     {
     }
 
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             std::enable_if_t<isView(S) && !isConstantView(SS) && dimensionsMatch(M, N, MM, NN) &&
-                                  (M != MM || N != NN || S != SS),
-                              int> = 0>
+    template<
+        size_type MM, size_type NN, DataStorageStrategy SS,
+        std::enable_if_t<
+            isView(S) && isContainer(SS) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS), int> = 0>
     MatrixImplementation(MatrixImplementation<T, MM, NN, SS>& other)
         : dataStorage_{other.rowCount(), other.columnCount(), other.sourceRowCount(), other.sourceColumnCount(),
                        other.data()}
@@ -99,13 +99,20 @@ public:
     }
 
     template<size_type MM, size_type NN, DataStorageStrategy SS,
-             std::enable_if_t<isConstantView(S) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS),
+             std::enable_if_t<(isConstantView(S) || (isView(S) && !isContainer(SS))) && dimensionsMatch(M, N, MM, NN) &&
+                                  (M != MM || N != NN || S != SS),
                               int> = 0>
     MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& other)
         : dataStorage_{other.rowCount(), other.columnCount(), other.sourceRowCount(), other.sourceColumnCount(),
                        other.data()}
     {
     }
+
+    template<size_type MM, size_type NN, DataStorageStrategy SS,
+             std::enable_if_t<(isView(S) || isConstantView(S)) && isContainer(SS) && dimensionsMatch(M, N, MM, NN) &&
+                                  (M != MM || N != NN || S != SS),
+                              int> = 0>
+    MatrixImplementation(MatrixImplementation<T, MM, NN, SS>&& other) = delete;
 
     template<size_type MM, size_type NN, DataStorageStrategy SS,
              typename = std::enable_if_t<isView(S) && dimensionsMatch(M, N, MM, NN)>>
@@ -582,7 +589,7 @@ template<typename T = double, size_type M = dynamic, size_type N = dynamic>
 using ConstantMatrixView = MatrixImplementation<T, M, N, DataStorageStrategy::constantView>;
 
 template<typename T, size_type M, size_type N, size_type MM, size_type NN>
-using NormalizedMatrix =
+using StaticMatrix =
     MatrixImplementation<T, M != dynamic ? M : MM, N != dynamic ? N : NN, DataStorageStrategyFor<T, M, N>::value>;
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
@@ -653,7 +660,7 @@ template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type 
          DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
 auto operator+(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
-    auto result = NormalizedMatrix<T, M, N, MM, NN>{a};
+    auto result = StaticMatrix<T, M, N, MM, NN>{a};
     return result += b;
 }
 
@@ -661,7 +668,7 @@ template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type 
          DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
 auto operator-(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
-    auto result = NormalizedMatrix<T, M, N, MM, NN>{a};
+    auto result = StaticMatrix<T, M, N, MM, NN>{a};
     return result -= b;
 }
 
