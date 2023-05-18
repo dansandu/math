@@ -99,7 +99,7 @@ public:
     }
 
     template<size_type MM, size_type NN, DataStorageStrategy SS,
-             std::enable_if_t<(isConstantView(S) || (isView(S) && !isContainer(SS))) && dimensionsMatch(M, N, MM, NN) &&
+             std::enable_if_t<(isConstantView(S) || (isView(S) && isView(SS))) && dimensionsMatch(M, N, MM, NN) &&
                                   (M != MM || N != NN || S != SS),
                               int> = 0>
     MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& other)
