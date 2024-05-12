@@ -1,10 +1,12 @@
 #pragma once
 
 #include "dansandu/ballotin/exception.hpp"
+#include "dansandu/ballotin/logging.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/matrix/common.hpp"
 #include "dansandu/math/internal/matrix/dimensionality_storage.hpp"
 
+#include <stacktrace>
 #include <vector>
 
 namespace dansandu::math::matrix
@@ -17,7 +19,7 @@ public:
     using iterator = typename std::vector<T>::iterator;
     using const_iterator = typename std::vector<T>::const_iterator;
 
-    DataStorage()
+    DataStorage() : referenceCount_{0}
     {
         if constexpr (M != dynamic && N != dynamic && M != 0 && N != 0)
         {
@@ -26,7 +28,7 @@ public:
     }
 
     template<size_type L, typename = std::enable_if_t<isVectorOfLength(M, N, L)>>
-    explicit DataStorage(const T (&array)[L]) : data_{array, array + L}
+    explicit DataStorage(const T (&array)[L]) : data_{array, array + L}, referenceCount_{0}
     {
         if constexpr (N == L)
         {
@@ -48,7 +50,7 @@ public:
     }
 
     template<size_type MM, size_type NN, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
-    explicit DataStorage(const T (&array)[MM][NN]) : DimensionalityStorage<T, M, N>{MM, NN}
+    explicit DataStorage(const T (&array)[MM][NN]) : DimensionalityStorage<T, M, N>{MM, NN}, referenceCount_{0}
     {
         data_.reserve(MM * NN);
         for (auto row = 0; row < MM; ++row)
@@ -60,7 +62,8 @@ public:
         }
     }
 
-    DataStorage(size_type rows, size_type columns, const T& fillValue) : DimensionalityStorage<T, M, N>{rows, columns}
+    DataStorage(size_type rows, size_type columns, const T& fillValue)
+        : DimensionalityStorage<T, M, N>{rows, columns}, referenceCount_{0}
     {
         if (rows < 0 || columns < 0 || (M != dynamic && M != rows) || (N != dynamic && N != columns))
         {
@@ -72,7 +75,7 @@ public:
 
     template<typename IteratorBegin, typename IteratorEnd>
     DataStorage(size_type rows, size_type columns, IteratorBegin sourceBegin, IteratorEnd sourceEnd)
-        : DimensionalityStorage<T, M, N>{rows, columns}
+        : DimensionalityStorage<T, M, N>{rows, columns}, referenceCount_{0}
     {
         if (rows < 0 || columns < 0 || (M != dynamic && M != rows) || (N != dynamic && N != columns))
         {
@@ -96,7 +99,7 @@ public:
     }
 
     DataStorage(size_type rows, size_type columns, std::vector<T> buffer)
-        : DimensionalityStorage<T, M, N>{rows, columns}, data_{std::move(buffer)}
+        : DimensionalityStorage<T, M, N>{rows, columns}, data_{std::move(buffer)}, referenceCount_{0}
     {
         if (rows < 0 || columns < 0 || (M != dynamic && M != rows) || (N != dynamic && N != columns))
         {
@@ -111,24 +114,51 @@ public:
         }
     }
 
-    DataStorage(const DataStorage&) = default;
+    DataStorage(const DataStorage& other)
+        : DimensionalityStorage<T, M, N>{other}, data_{other.data_}, referenceCount_{0}
+    {
+    }
 
     DataStorage(DataStorage&& other) noexcept
-        : DimensionalityStorage<T, M, N>{std::move(other)}, data_{std::move(other.data_)}
+        : DimensionalityStorage<T, M, N>{std::move(other)}, data_{std::move(other.data_)}, referenceCount_{0}
     {
         other.DimensionalityStorage<T, M, N>::setRowCount(0);
         other.DimensionalityStorage<T, M, N>::setColumnCount(0);
     }
 
-    DataStorage& operator=(const DataStorage&) = default;
+    DataStorage& operator=(const DataStorage& other)
+    {
+        if (referenceCount_ != 0)
+        {
+            THROW(std::logic_error, "there are ", referenceCount_,
+                  " matrix views still pointing to this matrix container\n");
+        }
+        DimensionalityStorage<T, M, N>::operator=(other);
+        data_ = other.data_;
+        return *this;
+    }
 
     DataStorage& operator=(DataStorage&& other) noexcept
     {
+        if (referenceCount_ != 0)
+        {
+            LOG_ERROR("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
+                      std::stacktrace::current());
+        }
         DimensionalityStorage<T, M, N>::operator=(std::move(other));
         other.DimensionalityStorage<T, M, N>::setRowCount(0);
         other.DimensionalityStorage<T, M, N>::setColumnCount(0);
         data_ = std::move(other.data_);
         return *this;
+    }
+
+    ~DataStorage()
+    {
+        if (referenceCount_ != 0)
+        {
+            LOG_ERROR("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
+                      std::stacktrace::current());
+        }
     }
 
     auto& unsafeSubscript(size_type row, size_type column)
@@ -211,6 +241,11 @@ public:
         return data_.data();
     }
 
+    auto referenceCount() const
+    {
+        return &referenceCount_;
+    }
+
 private:
     auto getIndex(size_type row, size_type column) const
     {
@@ -223,6 +258,7 @@ private:
     }
 
     std::vector<T> data_;
+    mutable int referenceCount_;
 };
 
 }

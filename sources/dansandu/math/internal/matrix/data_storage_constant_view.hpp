@@ -14,12 +14,39 @@ public:
     using const_iterator = ConstantMatrixViewIterator<T>;
 
     DataStorage(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
-                size_type sourceColumnCount, const T* viewBegin)
+                size_type sourceColumnCount, const T* viewBegin, int* const referenceCount)
         : DimensionalityStorage<T, M, N>{viewRowCount, viewColumnCount},
           viewBegin_{viewBegin},
           sourceRowCount_{sourceRowCount},
-          sourceColumnCount_{sourceColumnCount}
+          sourceColumnCount_{sourceColumnCount},
+          referenceCount_{referenceCount}
     {
+        ++*referenceCount_;
+    }
+
+    DataStorage(const DataStorage& other)
+        : DimensionalityStorage<T, M, N>{other.rowCount(), other.columnCount()},
+          viewBegin_{other.viewBegin_},
+          sourceRowCount_{other.sourceRowCount_},
+          sourceColumnCount_{other.sourceColumnCount_},
+          referenceCount_{other.referenceCount_}
+    {
+        ++*referenceCount_;
+    }
+
+    DataStorage(DataStorage&& other) noexcept
+        : DimensionalityStorage<T, M, N>{other.rowCount(), other.columnCount()},
+          viewBegin_{other.viewBegin_},
+          sourceRowCount_{other.sourceRowCount_},
+          sourceColumnCount_{other.sourceColumnCount_},
+          referenceCount_{other.referenceCount_}
+    {
+        ++*referenceCount_;
+    }
+
+    ~DataStorage()
+    {
+        --*referenceCount_;
     }
 
     const auto& unsafeSubscript(size_type row, size_type column) const
@@ -78,6 +105,11 @@ public:
         return viewBegin_;
     }
 
+    auto referenceCount() const
+    {
+        return referenceCount_;
+    }
+
 private:
     auto getIndex(size_type row, size_type column) const
     {
@@ -99,6 +131,7 @@ private:
     const T* viewBegin_;
     size_type sourceRowCount_;
     size_type sourceColumnCount_;
+    int* referenceCount_;
 };
 
 }
