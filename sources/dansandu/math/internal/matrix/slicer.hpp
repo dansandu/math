@@ -21,7 +21,12 @@ public:
 
         const auto viewBegin = matrix.data() + viewBeginRow * matrix.sourceColumnCount() + viewBeginColumn;
 
-        return {viewRows, viewColumns, matrix.sourceRowCount(), matrix.sourceColumnCount(), viewBegin};
+        return {viewRows,
+                viewColumns,
+                matrix.sourceRowCount(),
+                matrix.sourceColumnCount(),
+                viewBegin,
+                matrix.referenceCount()};
     }
 
     template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
@@ -34,7 +39,12 @@ public:
 
         const auto viewBegin = matrix.data() + viewBeginRow * matrix.sourceColumnCount() + viewBeginColumn;
 
-        return {viewRows, viewColumns, matrix.sourceRowCount(), matrix.sourceColumnCount(), viewBegin};
+        return {viewRows,
+                viewColumns,
+                matrix.sourceRowCount(),
+                matrix.sourceColumnCount(),
+                viewBegin,
+                matrix.referenceCount()};
     }
 
 private:

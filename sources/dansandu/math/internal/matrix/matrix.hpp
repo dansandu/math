@@ -68,15 +68,15 @@ public:
 
     template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
     MatrixImplementation(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
-                         size_type sourceColumnCount, T* viewBegin)
-        : dataStorage_{viewRowCount, viewColumnCount, sourceRowCount, sourceColumnCount, viewBegin}
+                         size_type sourceColumnCount, T* viewBegin, int* const referenceCount)
+        : dataStorage_{viewRowCount, viewColumnCount, sourceRowCount, sourceColumnCount, viewBegin, referenceCount}
     {
     }
 
     template<typename TT = T, typename = std::enable_if_t<isConstantView(S), TT>>
     MatrixImplementation(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
-                         size_type sourceColumnCount, const T* viewBegin)
-        : dataStorage_{viewRowCount, viewColumnCount, sourceRowCount, sourceColumnCount, viewBegin}
+                         size_type sourceColumnCount, const T* viewBegin, int* const referenceCount)
+        : dataStorage_{viewRowCount, viewColumnCount, sourceRowCount, sourceColumnCount, viewBegin, referenceCount}
     {
     }
 
@@ -93,8 +93,8 @@ public:
         std::enable_if_t<
             isView(S) && isContainer(SS) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS), int> = 0>
     MatrixImplementation(MatrixImplementation<T, MM, NN, SS>& other)
-        : dataStorage_{other.rowCount(), other.columnCount(), other.sourceRowCount(), other.sourceColumnCount(),
-                       other.data()}
+        : dataStorage_{other.rowCount(),          other.columnCount(), other.sourceRowCount(),
+                       other.sourceColumnCount(), other.data(),        other.referenceCount()}
     {
     }
 
@@ -103,16 +103,10 @@ public:
                                   (M != MM || N != NN || S != SS),
                               int> = 0>
     MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& other)
-        : dataStorage_{other.rowCount(), other.columnCount(), other.sourceRowCount(), other.sourceColumnCount(),
-                       other.data()}
+        : dataStorage_{other.rowCount(),          other.columnCount(), other.sourceRowCount(),
+                       other.sourceColumnCount(), other.data(),        other.referenceCount()}
     {
     }
-
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             std::enable_if_t<(isView(S) || isConstantView(S)) && isContainer(SS) && dimensionsMatch(M, N, MM, NN) &&
-                                  (M != MM || N != NN || S != SS),
-                              int> = 0>
-    MatrixImplementation(MatrixImplementation<T, MM, NN, SS>&& other) = delete;
 
     template<size_type MM, size_type NN, DataStorageStrategy SS,
              typename = std::enable_if_t<isView(S) && dimensionsMatch(M, N, MM, NN)>>
@@ -573,6 +567,11 @@ public:
     auto data() const
     {
         return dataStorage_.data();
+    }
+
+    auto referenceCount() const
+    {
+        return dataStorage_.referenceCount();
     }
 
 private:

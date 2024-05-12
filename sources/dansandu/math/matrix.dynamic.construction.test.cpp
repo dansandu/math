@@ -209,7 +209,7 @@ TEST_CASE("matrix.dynamic.construction")
 
         SECTION("container to view")
         {
-            const auto matrix = ConstantMatrixView<int>{original};
+            const auto matrix = ConstantMatrixView<int>{std::move(original)};
 
             REQUIRE(matrix.rowCount() == 2);
 
