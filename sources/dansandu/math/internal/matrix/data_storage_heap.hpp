@@ -131,7 +131,7 @@ public:
         if (referenceCount_ != 0)
         {
             THROW(std::logic_error, "there are ", referenceCount_,
-                  " matrix views still pointing to this matrix container\n");
+                  " matrix views still pointing to this matrix container");
         }
         DimensionalityStorage<T, M, N>::operator=(other);
         data_ = other.data_;
