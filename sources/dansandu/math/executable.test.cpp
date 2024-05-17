@@ -1,4 +1,5 @@
 #define CATCH_CONFIG_RUNNER
+
 #include "catchorg/catch/catch.hpp"
 #include "dansandu/ballotin/environment.hpp"
 #include "dansandu/ballotin/file_system.hpp"
