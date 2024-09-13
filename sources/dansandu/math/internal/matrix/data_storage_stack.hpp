@@ -9,6 +9,8 @@
 #include <array>
 #include <stacktrace>
 
+using dansandu::ballotin::logging::LogCritical;
+
 namespace dansandu::math::matrix
 {
 
@@ -104,8 +106,7 @@ public:
     {
         if (referenceCount_ != 0)
         {
-            LOG_ERROR("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
-                      std::stacktrace::current());
+            LogCritical("there are ", referenceCount_, " matrix views still pointing to this matrix container\n", std::to_string(std::stacktrace::current()));
         }
         DimensionalityStorage<T, M, N>::operator=(other);
         data_ = other.data_;
@@ -116,8 +117,7 @@ public:
     {
         if (referenceCount_ != 0)
         {
-            LOG_ERROR("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
-                      std::stacktrace::current());
+            LogCritical("there are ", referenceCount_, " matrix views still pointing to this matrix container\n", std::to_string(std::stacktrace::current()));
         }
     }
 
