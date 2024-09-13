@@ -9,8 +9,10 @@
 using dansandu::ballotin::environment::getEnvironmentVariable;
 using dansandu::ballotin::file_system::writeToStandardOutput;
 using dansandu::ballotin::logging::Level;
+using dansandu::ballotin::logging::LogError;
+using dansandu::ballotin::logging::LogFileHandler;
 using dansandu::ballotin::logging::Logger;
-using dansandu::ballotin::logging::UnitTestsHandler;
+using dansandu::ballotin::logging::LogInfo;
 using dansandu::ballotin::progress_bar::ProgressBar;
 
 class ProgressBarListener : public Catch::TestEventListenerBase
@@ -50,13 +52,13 @@ public:
     void testCaseStarting(Catch::TestCaseInfo const& testInfo) override
     {
         progressBar_->updateSummary(testInfo.name);
-        LOG_INFO("Starting test case '", testInfo.name, "'");
+        LogInfo("Starting test case '", testInfo.name, "'");
     }
 
     void testCaseEnded(Catch::TestCaseStats const& testCaseStats) override
     {
         progressBar_->advance();
-        LOG_INFO("Ending test case '", testCaseStats.testInfo.name, "'");
+        LogInfo("Ending test case '", testCaseStats.testInfo.name, "'");
     }
 
     void testGroupEnded(Catch::TestGroupStats const& testGroupStats) override
@@ -72,17 +74,17 @@ CATCH_REGISTER_LISTENER(ProgressBarListener);
 
 int main(const int argumentsCount, const char* const* const arguments)
 {
-    auto unitTestsHandler = UnitTestsHandler{"unit_tests.log"};
+    auto unitTestsHandler = LogFileHandler{"unit_tests.log"};
 
     auto& logger = Logger::globalInstance();
     logger.setLevel(Level::debug);
-    logger.addHandler("UnitTests", Level::debug, unitTestsHandler);
+    logger.addHandler(L"UnitTests", Level::debug, unitTestsHandler);
 
     const auto catchResult = Catch::Session().run(argumentsCount, arguments);
 
-    if (unitTestsHandler.errorsLogged() || unitTestsHandler.warningsLogged())
+    if (unitTestsHandler.warningsLogged())
     {
-        writeToStandardOutput("Tests failed: errors or warnings were logged\n");
+        writeToStandardOutput("Tests failed: criticals, errors or warnings were logged\n");
         return -1;
     }
 
