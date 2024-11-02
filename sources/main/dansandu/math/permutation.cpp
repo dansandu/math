@@ -1,12 +1,8 @@
 #include "dansandu/math/permutation.hpp"
 #include "dansandu/ballotin/exception.hpp"
-#include "dansandu/range/range.hpp"
 
+#include <ranges>
 #include <vector>
-
-using dansandu::range::range::integers;
-using dansandu::range::range::toVector;
-using dansandu::range::range::operator|;
 
 namespace dansandu::math::permutation
 {
@@ -15,7 +11,7 @@ std::vector<int> getIdentityPermutation(const int n)
 {
     if (n >= 0)
     {
-        return integers(0, 1, n) | toVector();
+        return std::views::iota(0, n) | std::ranges::to<std::vector>();
     }
     else
     {

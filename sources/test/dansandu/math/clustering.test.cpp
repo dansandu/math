@@ -1,14 +1,11 @@
 #include "dansandu/math/clustering.hpp"
-#include "catchorg/catch/catch.hpp"
 #include "dansandu/math/matrix.hpp"
-#include "dansandu/range/range.hpp"
+#include "dansandu/radiance/radiance.hpp"
 
 using dansandu::math::clustering::kMeans;
-using dansandu::math::matrix::close;
 using dansandu::math::matrix::Matrix;
 using dansandu::math::matrix::sliceRow;
-
-using namespace dansandu::range::range;
+using dansandu::radiance::Tolerance;
 
 TEST_CASE("clustering")
 {
@@ -22,28 +19,31 @@ TEST_CASE("clustering")
         //   *       |    **
         //  *        |
 
-        const auto topLeftCluster =
-            Matrix<float>{{{-4.0f, 2.0f}, {-7.0f, 3.0f}, {-3.0f, 6.0}, {-7.0f, 5.0}, {-8.0f, 4.0}}};
+        const auto topLeftCluster = Matrix<double>{{{-4.0, 2.0}, {-7.0, 3.0}, {-3.0, 6.0}, {-7.0, 5.0}, {-8.0, 4.0}}};
 
-        const auto bottomLeftCluster = Matrix<float>{{{-8.0f, -9.0f}, {-6.0f, -6.0f}}};
+        const auto bottomLeftCluster = Matrix<double>{{{-8.0, -9.0}, {-6.0, -6.0}}};
 
-        const auto middleRightCluster = Matrix<float>{
-            {{5.0f, -4.0f}, {6.0f, -4.5f}, {9.0f, -2.0f}, {9.0f, -2.0f}, {7.0f, -1.0f}, {8.0f, 0.0f}, {10.0f, 1.0f}}};
+        const auto middleRightCluster =
+            Matrix<double>{{{5.0, -4.0}, {6.0, -4.5}, {9.0, -2.0}, {9.0, -2.0}, {7.0, -1.0}, {8.0, 0.0}, {10.0, 1.0}}};
 
-        const auto view = topLeftCluster | concatenate(bottomLeftCluster) | concatenate(middleRightCluster);
+        auto concatanated = std::vector<double>{};
+        concatanated.insert(concatanated.end(), topLeftCluster.cbegin(), topLeftCluster.cend());
 
-        const auto samples = Matrix<float>{14, 2, view.cbegin(), view.cend()};
+        concatanated.insert(concatanated.end(), bottomLeftCluster.cbegin(), bottomLeftCluster.cend());
 
-        auto centroids = Matrix<float>{{{10.0f, 1.0f}, {-7.0f, 3.0f}, {-8.0f, 4.0f}}};
+        concatanated.insert(concatanated.end(), middleRightCluster.cbegin(), middleRightCluster.cend());
+
+        const auto samples = Matrix<double>{14, 2, std::move(concatanated)};
+
+        auto centroids = Matrix<double>{{{10.0, 1.0}, {-7.0, 3.0}, {-8.0, 4.0}}};
         const auto iterations = 20;
         const auto labels = kMeans(samples, centroids, iterations);
         const auto expectedLabels = std::vector<int>{{2, 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0}};
 
         REQUIRE(expectedLabels == labels);
 
-        const auto expectedCentroids = Matrix<float>{{{7.71429f, -1.78571f}, {-7.00f, -7.50f}, {-5.80f, 4.00f}}};
-        const auto epsilon = 1.0e-5f;
+        const auto expectedCentroids = Matrix<double>{{{7.71429, -1.78571}, {-7.00, -7.50}, {-5.80, 4.00}}};
 
-        REQUIRE(close(expectedCentroids, centroids, epsilon));
+        REQUIRE(centroids == Tolerance(expectedCentroids));
     }
 }

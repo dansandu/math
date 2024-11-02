@@ -23,7 +23,7 @@ public:
 
     DataStorage() : DimensionalityStorage<T, M, N>{M, N}, referenceCount_{0}
     {
-        std::fill(begin(), end(), dansandu::math::common::additiveIdentity<T>);
+        std::fill(begin(), end(), dansandu::math::additiveIdentity<T>);
     }
 
     template<size_type L, typename = std::enable_if_t<isVectorOfLength(M, N, L)>>

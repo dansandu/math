@@ -1,5 +1,5 @@
 #include "dansandu/math/matrix.hpp"
-#include "catchorg/catch/catch.hpp"
+#include "dansandu/radiance/radiance.hpp"
 
 using dansandu::math::matrix::ConstantMatrixView;
 using dansandu::math::matrix::dynamic;
