@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace dansandu::math::common
+namespace dansandu::math
 {
 
 struct Add
@@ -139,10 +139,11 @@ constexpr auto multiplicativeIdentity = NumericTraits<T>::multiplicative_identit
 template<typename T>
 constexpr auto pi = NumericTraits<T>::pi;
 
-template<typename T, typename = std::enable_if_t<std::is_floating_point_v<T>, T>>
-constexpr auto close(T lhs, T rhs, T epsilon)
+template<typename T>
+constexpr auto close(const T& a, const T& b, const double relative = 1.0e-6, const double absolute = 1.0e-6)
 {
-    return std::abs(lhs - rhs) < epsilon;
+    using std::abs;
+    return abs(a - b) <= (absolute + relative * abs(b));
 }
 
 template<typename T>

@@ -7,17 +7,20 @@
 #include <random>
 
 using dansandu::math::matrix::ConstantMatrixView;
+using dansandu::math::matrix::DataStorageStrategy;
 using dansandu::math::matrix::distance;
 using dansandu::math::matrix::dynamic;
 using dansandu::math::matrix::Matrix;
+using dansandu::math::matrix::MatrixImplementation;
 using dansandu::math::matrix::MatrixView;
+using dansandu::math::matrix::size_type;
 using dansandu::math::matrix::sliceRow;
 
 namespace dansandu::math::clustering
 {
 
-std::vector<int> kMeans(const ConstantMatrixView<float> samples, const MatrixView<float> centroids,
-                        const int iterations)
+template<typename T>
+std::vector<int> kMeansWork(const ConstantMatrixView<T> samples, const MatrixView<T> centroids, const int iterations)
 {
     if (centroids.rowCount() <= 0)
     {
@@ -32,7 +35,7 @@ std::vector<int> kMeans(const ConstantMatrixView<float> samples, const MatrixVie
     }
 
     auto labels = std::vector<int>(samples.rowCount());
-    auto newCentroids = Matrix<float>{centroids.rowCount(), centroids.columnCount()};
+    auto newCentroids = Matrix<T>{centroids.rowCount(), centroids.columnCount()};
     auto count = std::vector<int>(centroids.rowCount());
     for (auto iteration = 0; iteration < iterations; ++iteration)
     {
@@ -40,7 +43,7 @@ std::vector<int> kMeans(const ConstantMatrixView<float> samples, const MatrixVie
         {
             const auto sample = sliceRow(samples, s);
             auto label = 0;
-            auto minimumDistance = std::numeric_limits<float>::max();
+            auto minimumDistance = std::numeric_limits<T>::max();
             for (auto c = 0; c < centroids.rowCount(); ++c)
             {
                 const auto centroid = sliceRow(centroids, c);
@@ -55,7 +58,7 @@ std::vector<int> kMeans(const ConstantMatrixView<float> samples, const MatrixVie
         }
         for (auto c = 0; c < centroids.rowCount(); ++c)
         {
-            sliceRow(newCentroids, c) /= static_cast<float>(count[c]);
+            sliceRow(newCentroids, c) /= static_cast<T>(count[c]);
         }
         centroids.deepCopy(newCentroids);
         std::fill(newCentroids.begin(), newCentroids.end(), 0.0f);
@@ -63,6 +66,18 @@ std::vector<int> kMeans(const ConstantMatrixView<float> samples, const MatrixVie
     }
 
     return labels;
+}
+
+std::vector<int> kMeans(const ConstantMatrixView<float> samples, const MatrixView<float> centroids,
+                        const int iterations)
+{
+    return kMeansWork(samples, centroids, iterations);
+}
+
+std::vector<int> kMeans(const ConstantMatrixView<double> samples, const MatrixView<double> centroids,
+                        const int iterations)
+{
+    return kMeansWork(samples, centroids, iterations);
 }
 
 }

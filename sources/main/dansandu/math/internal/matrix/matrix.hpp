@@ -9,6 +9,7 @@
 #include "dansandu/math/internal/matrix/data_storage_view.hpp"
 
 #include <algorithm>
+#include <sstream>
 
 namespace dansandu::math::matrix
 {
@@ -47,8 +48,7 @@ public:
     }
 
     template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
-    MatrixImplementation(size_type rows, size_type columns,
-                         const T& fillValue = dansandu::math::common::additiveIdentity<T>)
+    MatrixImplementation(size_type rows, size_type columns, const T& fillValue = dansandu::math::additiveIdentity<T>)
         : dataStorage_{rows, columns, fillValue}
     {
     }
@@ -135,7 +135,7 @@ public:
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::common::Add{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::Add{});
         return *this;
     }
 
@@ -151,7 +151,7 @@ public:
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::common::Add{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::Add{});
         return *this;
     }
 
@@ -167,7 +167,7 @@ public:
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::common::Subtract{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::Subtract{});
         return *this;
     }
 
@@ -183,35 +183,49 @@ public:
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::common::Subtract{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::Subtract{});
+        return *this;
+    }
+
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
+    auto& operator+=(T scalar)
+    {
+        std::transform(cbegin(), cend(), begin(), [scalar](auto element) { return element + scalar; });
+        return *this;
+    }
+
+    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
+    auto& operator-=(T scalar)
+    {
+        std::transform(cbegin(), cend(), begin(), [scalar](auto element) { return element - scalar; });
         return *this;
     }
 
     template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto& operator*=(T scalar)
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::common::MultiplyBy<T>{scalar});
+        std::transform(cbegin(), cend(), begin(), dansandu::math::MultiplyBy<T>{scalar});
         return *this;
     }
 
     template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
     auto& operator*=(T scalar) const
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::common::MultiplyBy<T>{scalar});
+        std::transform(cbegin(), cend(), begin(), dansandu::math::MultiplyBy<T>{scalar});
         return *this;
     }
 
     template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto& operator/=(T scalar)
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::common::DivideBy<T>{scalar});
+        std::transform(cbegin(), cend(), begin(), dansandu::math::DivideBy<T>{scalar});
         return *this;
     }
 
     template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
     auto& operator/=(T scalar) const
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::common::DivideBy<T>{scalar});
+        std::transform(cbegin(), cend(), begin(), dansandu::math::DivideBy<T>{scalar});
         return *this;
     }
 
@@ -574,6 +588,8 @@ public:
         return dataStorage_.referenceCount();
     }
 
+    std::string toString() const;
+
 private:
     DataStorage<T, M, N, S> dataStorage_;
 };
@@ -607,6 +623,35 @@ bool operator!=(const MatrixImplementation<T, M, N, S>& a, const MatrixImplement
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+bool operator<(const MatrixImplementation<T, M, N, S>& left, const MatrixImplementation<T, MM, NN, SS>& right)
+{
+    return left.rowCount() == right.rowCount() && left.columnCount() == right.columnCount() &&
+           std::equal(left.cbegin(), left.cend(), right.cbegin(), [](const auto a, const auto b) { return a < b; });
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+bool operator>(const MatrixImplementation<T, M, N, S>& left, const MatrixImplementation<T, MM, NN, SS>& right)
+{
+    return right < left;
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+bool operator<=(const MatrixImplementation<T, M, N, S>& left, const MatrixImplementation<T, MM, NN, SS>& right)
+{
+    return !(right < left);
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+bool operator>=(const MatrixImplementation<T, M, N, S>& left, const MatrixImplementation<T, MM, NN, SS>& right)
+{
+    return !(left < right);
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
          DataStorageStrategy SS, typename = std::enable_if_t<N == MM || N == dynamic || MM == dynamic>>
 auto operator*(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
@@ -637,8 +682,37 @@ auto MatrixImplementation<T, M, N, S>::operator-() const
 {
     auto copy = Matrix<T, M, N>{*this};
     std::transform(cbegin(), cend(), copy.begin(),
-                   dansandu::math::common::MultiplyBy<T>{-dansandu::math::common::multiplicativeIdentity<T>});
+                   dansandu::math::MultiplyBy<T>{-dansandu::math::multiplicativeIdentity<T>});
     return copy;
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+auto operator+(const MatrixImplementation<T, M, N, S>& matrix, T scalar)
+{
+    auto result = Matrix<T, M, N>{matrix};
+    return result += scalar;
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+auto operator+(T scalar, const MatrixImplementation<T, M, N, S>& matrix)
+{
+    auto result = Matrix<T, M, N>{matrix};
+    return result += scalar;
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+auto operator-(const MatrixImplementation<T, M, N, S>& matrix, T scalar)
+{
+    auto result = Matrix<T, M, N>{matrix};
+    return result -= scalar;
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+auto operator-(T scalar, const MatrixImplementation<T, M, N, S>& matrix)
+{
+    auto result = Matrix<T, M, N>{matrix};
+    std::transform(result.cbegin(), result.cend(), result.begin(), [scalar](auto element) { return scalar - element; });
+    return result;
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
@@ -685,7 +759,7 @@ auto identity(const size_type rows, const size_type columns)
     const auto diagonal = std::min(rows, columns);
     for (auto i = 0; i < diagonal; ++i)
     {
-        result(i, i) = dansandu::math::common::multiplicativeIdentity<T>;
+        result(i, i) = dansandu::math::multiplicativeIdentity<T>;
     }
     return result;
 }
@@ -703,8 +777,22 @@ auto identity()
     const auto diagonal = std::min(M, N);
     for (auto i = 0; i < diagonal; ++i)
     {
-        result(i, i) = dansandu::math::common::multiplicativeIdentity<T>;
+        result(i, i) = dansandu::math::multiplicativeIdentity<T>;
     }
+    return result;
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+auto abs(const MatrixImplementation<T, M, N, S>& matrix)
+{
+    auto result = Matrix<T, M, N>{matrix};
+
+    for (auto& element : result)
+    {
+        using std::abs;
+        element = abs(element);
+    }
+
     return result;
 }
 
@@ -719,10 +807,10 @@ auto magnitude(const MatrixImplementation<T, M, N, S>& matrix)
                   matrix.columnCount());
         }
     }
-    auto sum = dansandu::math::common::additiveIdentity<T>;
-    for (const auto component : matrix)
+    auto sum = dansandu::math::additiveIdentity<T>;
+    for (const auto element : matrix)
     {
-        sum += component * component;
+        sum += element * element;
     }
     return std::sqrt(sum);
 }
@@ -738,12 +826,12 @@ auto normalized(const MatrixImplementation<T, M, N, S>& matrix)
                   matrix.columnCount());
         }
     }
-    auto sum = dansandu::math::common::additiveIdentity<T>;
-    for (const auto component : matrix)
+    auto sum = dansandu::math::additiveIdentity<T>;
+    for (const auto element : matrix)
     {
-        sum += component * component;
+        sum += element * element;
     }
-    return matrix * (dansandu::math::common::multiplicativeIdentity<T> / std::sqrt(sum));
+    return matrix * (dansandu::math::multiplicativeIdentity<T> / std::sqrt(sum));
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
@@ -758,7 +846,7 @@ auto dotProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplement
                   " and ", b.rowCount(), "x", b.columnCount());
         }
     }
-    auto sum = dansandu::math::common::additiveIdentity<T>;
+    auto sum = dansandu::math::additiveIdentity<T>;
     auto left = a.cbegin();
     auto right = b.cbegin();
     while (left != a.cend())
@@ -780,7 +868,7 @@ auto distance(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementat
                   b.rowCount(), "x", b.columnCount());
         }
     }
-    auto sum = dansandu::math::common::additiveIdentity<T>;
+    auto sum = dansandu::math::additiveIdentity<T>;
     auto left = a.cbegin();
     auto leftEnd = a.cend();
     auto right = b.cbegin();
@@ -828,20 +916,12 @@ auto transposed(const MatrixImplementation<T, M, N, S>& matrix)
     return result;
 }
 
-template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
-bool close(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b, const T epsilon)
-{
-    return matrixDimensionsMatch(a, b) && std::equal(a.cbegin(), a.cend(), b.cbegin(), b.cend(),
-                                                     [epsilon](auto l, auto r) { return std::abs(l - r) < epsilon; });
-}
-
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
 std::ostream& operator<<(std::ostream& stream, const MatrixImplementation<T, M, N, S>& matrix)
 {
     auto printRow = [&](auto row)
     {
-        stream << "{";
+        stream << "[";
         if (matrix.columnCount() > 0)
         {
             stream << matrix.unsafeSubscript(row, 0);
@@ -850,10 +930,10 @@ std::ostream& operator<<(std::ostream& stream, const MatrixImplementation<T, M, 
         {
             stream << ", " << matrix.unsafeSubscript(row, column);
         }
-        stream << "}";
+        stream << "]";
     };
 
-    stream << "{";
+    stream << "[";
     if (matrix.rowCount() > 0)
     {
         printRow(0);
@@ -863,7 +943,15 @@ std::ostream& operator<<(std::ostream& stream, const MatrixImplementation<T, M, 
         stream << ", ";
         printRow(row);
     }
-    return stream << "}";
+    return stream << "]";
+}
+
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+std::string MatrixImplementation<T, M, N, S>::toString() const
+{
+    auto stream = std::ostringstream{};
+    stream << *this;
+    return stream.str();
 }
 
 }
