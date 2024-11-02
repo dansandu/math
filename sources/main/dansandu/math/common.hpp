@@ -139,8 +139,8 @@ constexpr auto multiplicativeIdentity = NumericTraits<T>::multiplicative_identit
 template<typename T>
 constexpr auto pi = NumericTraits<T>::pi;
 
-template<typename T>
-constexpr auto close(const T& a, const T& b, const double relative = 1.0e-6, const double absolute = 1.0e-6)
+template<typename T, typename U>
+constexpr auto close(const T& a, const U& b, const double relative = 1.0e-6, const double absolute = 1.0e-6)
 {
     using std::abs;
     return abs(a - b) <= (absolute + relative * abs(b));
