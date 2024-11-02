@@ -1,6 +1,6 @@
 #include "dansandu/math/permutation.hpp"
-#include "catchorg/catch/catch.hpp"
 #include "dansandu/ballotin/exception.hpp"
+#include "dansandu/radiance/radiance.hpp"
 
 #include <vector>
 
@@ -29,7 +29,7 @@ TEST_CASE("permutation")
 
         SECTION("negative length")
         {
-            REQUIRE_THROWS_AS(getIdentityPermutation(-2), std::logic_error);
+            REQUIRE_THROW(getIdentityPermutation(-2), std::logic_error);
         }
     }
 

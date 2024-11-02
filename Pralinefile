@@ -6,9 +6,6 @@ dependencies:
   artifact: ballotin
   version: 1.+0.+0.SNAPSHOT
 - organization: dansandu
-  artifact: range
-  version: 1.+0.+0
-- organization: catchorg
-  artifact: catch
-  version: 2.+5.+0
+  artifact: radiance
+  version: 1.0.0.SNAPSHOT
   scope: test

@@ -1,14 +1,11 @@
 #include "dansandu/math/clustering.hpp"
-#include "catchorg/catch/catch.hpp"
 #include "dansandu/math/matrix.hpp"
-#include "dansandu/range/range.hpp"
+#include "dansandu/radiance/radiance.hpp"
 
 using dansandu::math::clustering::kMeans;
 using dansandu::math::matrix::close;
 using dansandu::math::matrix::Matrix;
 using dansandu::math::matrix::sliceRow;
-
-using namespace dansandu::range::range;
 
 TEST_CASE("clustering")
 {
@@ -30,9 +27,14 @@ TEST_CASE("clustering")
         const auto middleRightCluster = Matrix<float>{
             {{5.0f, -4.0f}, {6.0f, -4.5f}, {9.0f, -2.0f}, {9.0f, -2.0f}, {7.0f, -1.0f}, {8.0f, 0.0f}, {10.0f, 1.0f}}};
 
-        const auto view = topLeftCluster | concatenate(bottomLeftCluster) | concatenate(middleRightCluster);
+        auto concatanated = std::vector<float>{};
+        concatanated.insert(concatanated.end(), topLeftCluster.cbegin(), topLeftCluster.cend());
 
-        const auto samples = Matrix<float>{14, 2, view.cbegin(), view.cend()};
+        concatanated.insert(concatanated.end(), bottomLeftCluster.cbegin(), bottomLeftCluster.cend());
+
+        concatanated.insert(concatanated.end(), middleRightCluster.cbegin(), middleRightCluster.cend());
+
+        const auto samples = Matrix<float>{14, 2, std::move(concatanated)};
 
         auto centroids = Matrix<float>{{{10.0f, 1.0f}, {-7.0f, 3.0f}, {-8.0f, 4.0f}}};
         const auto iterations = 20;

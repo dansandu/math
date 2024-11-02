@@ -1,9 +1,8 @@
 #include "dansandu/math/matrix.hpp"
-#include "catchorg/catch/catch.hpp"
+#include "dansandu/radiance/radiance.hpp"
 
 #include <stdexcept>
 
-using Catch::Detail::Approx;
 using dansandu::math::matrix::ConstantMatrixView;
 using dansandu::math::matrix::crossProduct;
 using dansandu::math::matrix::distance;
@@ -16,6 +15,7 @@ using dansandu::math::matrix::normalized;
 using dansandu::math::matrix::sliceColumn;
 using dansandu::math::matrix::Slicer;
 using dansandu::math::matrix::sliceRow;
+using dansandu::radiance::Tolerance;
 
 TEST_CASE("matrix")
 {
@@ -102,7 +102,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, 3, 1>{{10, 15, 20}};
                 auto b = Matrix<int, dynamic, dynamic>{{120, 105}};
 
-                REQUIRE_THROWS_AS(a + b, std::logic_error);
+                REQUIRE_THROW(a + b, std::logic_error);
             }
         }
 
@@ -122,7 +122,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, 1, dynamic>{{3, 5}};
                 auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
 
-                REQUIRE_THROWS_AS(a + b, std::logic_error);
+                REQUIRE_THROW(a + b, std::logic_error);
             }
         }
 
@@ -142,7 +142,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
                 auto b = Matrix<int, dynamic, dynamic>{{30, 40, 50}};
 
-                REQUIRE_THROWS_AS(a + b, std::logic_error);
+                REQUIRE_THROW(a + b, std::logic_error);
             }
         }
     }
@@ -188,7 +188,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, 3, 1>{{10, 15, 20}};
                 auto b = Matrix<int, dynamic, dynamic>{{120, 105}};
 
-                REQUIRE_THROWS_AS(a - b, std::logic_error);
+                REQUIRE_THROW(a - b, std::logic_error);
             }
         }
 
@@ -208,7 +208,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, 1, dynamic>{{3, 5}};
                 auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
 
-                REQUIRE_THROWS_AS(a - b, std::logic_error);
+                REQUIRE_THROW(a - b, std::logic_error);
             }
         }
 
@@ -228,7 +228,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, dynamic, dynamic>{{1, 2}};
                 auto b = Matrix<int, dynamic, dynamic>{{30, 40, 50}};
 
-                REQUIRE_THROWS_AS(a - b, std::logic_error);
+                REQUIRE_THROW(a - b, std::logic_error);
             }
         }
     }
@@ -260,7 +260,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, 2, dynamic>{{{3, 5, 7, 7}, {11, 13, 17, 17}}};
                 auto b = Matrix<int, 3, 1>{{23, 29, 31}};
 
-                REQUIRE_THROWS_AS(a * b, std::logic_error);
+                REQUIRE_THROW(a * b, std::logic_error);
             }
         }
 
@@ -280,7 +280,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, 1, dynamic>{{3, 5}};
                 auto b = Matrix<int, dynamic, 2>{{{1, 2}, {3, 4}, {5, 6}}};
 
-                REQUIRE_THROWS_AS(a * b, std::logic_error);
+                REQUIRE_THROW(a * b, std::logic_error);
             }
         }
     }
@@ -324,7 +324,7 @@ TEST_CASE("matrix")
         {
             auto a = Matrix<double, 1, 3>{{3.0, 5.0, -2.0}};
 
-            REQUIRE(magnitude(a) == Approx(6.164414));
+            REQUIRE(magnitude(a) == Tolerance(6.164414));
         }
 
         SECTION("dynamic")
@@ -333,14 +333,14 @@ TEST_CASE("matrix")
             {
                 auto a = Matrix<double, dynamic, dynamic>{{3.0, 5.0, -2.0}};
 
-                REQUIRE(magnitude(a) == Approx(6.164414));
+                REQUIRE(magnitude(a) == Tolerance(6.164414));
             }
 
             SECTION("invalid dimensions")
             {
                 auto a = Matrix<double, dynamic, dynamic>{{{3.0, 5.0}, {-2.0, 0.0}}};
 
-                REQUIRE_THROWS_AS(magnitude(a), std::logic_error);
+                REQUIRE_THROW(magnitude(a), std::logic_error);
             }
         }
     }
@@ -353,11 +353,11 @@ TEST_CASE("matrix")
 
             auto n = normalized(a);
 
-            REQUIRE(n.x() == Approx(0.486664263));
+            REQUIRE(n.x() == Tolerance(0.486664263));
 
-            REQUIRE(n.y() == Approx(0.811107106));
+            REQUIRE(n.y() == Tolerance(0.811107106));
 
-            REQUIRE(n.z() == Approx(-0.324442842));
+            REQUIRE(n.z() == Tolerance(-0.324442842));
         }
 
         SECTION("dynamic")
@@ -368,18 +368,18 @@ TEST_CASE("matrix")
 
                 auto n = normalized(a);
 
-                REQUIRE(n.x() == Approx(0.486664263));
+                REQUIRE(n.x() == Tolerance(0.486664263));
 
-                REQUIRE(n.y() == Approx(0.811107106));
+                REQUIRE(n.y() == Tolerance(0.811107106));
 
-                REQUIRE(n.z() == Approx(-0.324442842));
+                REQUIRE(n.z() == Tolerance(-0.324442842));
             }
 
             SECTION("invalid dimensions")
             {
                 auto a = Matrix<double, dynamic, dynamic>{{{3.0, 5.0}, {-2.0, 0.0}}};
 
-                REQUIRE_THROWS_AS(normalized(a), std::logic_error);
+                REQUIRE_THROW(normalized(a), std::logic_error);
             }
         }
     }
@@ -442,9 +442,9 @@ TEST_CASE("matrix")
                 auto b = Matrix<int, dynamic, dynamic>{{10, 100}};
                 auto c = Matrix<int, dynamic, dynamic>{{10, 100, 1000}};
 
-                REQUIRE_THROWS_AS(dotProduct(a, b), std::logic_error);
+                REQUIRE_THROW(dotProduct(a, b), std::logic_error);
 
-                REQUIRE_THROWS_AS(dotProduct(b, c), std::logic_error);
+                REQUIRE_THROW(dotProduct(b, c), std::logic_error);
             }
         }
     }
@@ -454,7 +454,7 @@ TEST_CASE("matrix")
         auto a = Matrix<double>{{1.0, 3.0, 10.0}};
         auto b = Matrix<double>{{5.0, 0.0, -2.0}};
 
-        REQUIRE(distance(a, b) == Approx(13.0));
+        REQUIRE(distance(a, b) == Tolerance(13.0));
     }
 
     SECTION("cross product")
@@ -485,9 +485,9 @@ TEST_CASE("matrix")
                 auto b = Matrix<int, 1, dynamic>{{10, 100, 3}};
                 auto c = Matrix<int, 1, dynamic>{{10, 100}};
 
-                REQUIRE_THROWS_AS(crossProduct(a, b), std::logic_error);
+                REQUIRE_THROW(crossProduct(a, b), std::logic_error);
 
-                REQUIRE_THROWS_AS(crossProduct(b, c), std::logic_error);
+                REQUIRE_THROW(crossProduct(b, c), std::logic_error);
             }
         }
     }
