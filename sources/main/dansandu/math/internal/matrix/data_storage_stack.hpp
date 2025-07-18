@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dansandu/ballotin/exception.hpp"
-#include "dansandu/journey/logger.hpp"
+#include "dansandu/journey/logging.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/matrix/common.hpp"
 #include "dansandu/math/internal/matrix/dimensionality_storage.hpp"
@@ -9,7 +9,7 @@
 #include <array>
 #include <stacktrace>
 
-using dansandu::journey::logger::LogCritical;
+using dansandu::journey::logging::LogCritical;
 
 namespace dansandu::math::matrix
 {
