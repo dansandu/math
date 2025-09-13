@@ -9,8 +9,6 @@
 #include <stacktrace>
 #include <vector>
 
-using dansandu::journey::logging::LogCritical;
-
 namespace dansandu::math::matrix
 {
 
@@ -144,8 +142,8 @@ public:
     {
         if (referenceCount_ != 0)
         {
-            LogCritical("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
-                        std::to_string(std::stacktrace::current()));
+            LOG_CRITICAL("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
+                         std::to_string(std::stacktrace::current()));
         }
         DimensionalityStorage<T, M, N>::operator=(std::move(other));
         other.DimensionalityStorage<T, M, N>::setRowCount(0);
@@ -158,8 +156,8 @@ public:
     {
         if (referenceCount_ != 0)
         {
-            LogCritical("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
-                        std::to_string(std::stacktrace::current()));
+            LOG_CRITICAL("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
+                         std::to_string(std::stacktrace::current()));
         }
     }
 

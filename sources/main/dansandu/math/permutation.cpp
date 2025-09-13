@@ -25,7 +25,7 @@ std::vector<int> getInvertedPermutation(const std::vector<int>& permutation)
 
     for (decltype(permutation.size()) index = 0; index < permutation.size(); ++index)
     {
-        inverted[permutation[index]] = index;
+        inverted[permutation[index]] = static_cast<int>(index);
     }
 
     return inverted;
