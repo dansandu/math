@@ -14,6 +14,19 @@
 namespace dansandu::math::matrix
 {
 
+template<typename T = double, size_type M = dynamic, size_type N = dynamic>
+using Matrix = MatrixImplementation<T, M, N, DataStorageStrategyFor<T, M, N>::value>;
+
+template<typename T = double, size_type M = dynamic, size_type N = dynamic>
+using MatrixView = MatrixImplementation<T, M, N, DataStorageStrategy::view>;
+
+template<typename T = double, size_type M = dynamic, size_type N = dynamic>
+using ConstantMatrixView = MatrixImplementation<T, M, N, DataStorageStrategy::constantView>;
+
+template<typename T, size_type M, size_type N, size_type MM, size_type NN>
+using StaticMatrix =
+    MatrixImplementation<T, M != dynamic ? M : MM, N != dynamic ? N : NN, DataStorageStrategyFor<T, M, N>::value>;
+
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
 class MatrixImplementation
 {
@@ -32,87 +45,90 @@ public:
 
     static constexpr auto dataStorageStrategy = S;
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     MatrixImplementation()
+        requires(isContainer(S))
     {
     }
 
-    template<size_type L, typename = std::enable_if_t<isContainer(S) && isVectorOfLength(M, N, L)>>
+    template<size_type L>
+        requires(isContainer(S) && isVectorOfLength(M, N, L))
     explicit MatrixImplementation(const T (&array)[L]) : dataStorage_{array}
     {
     }
 
-    template<size_type MM, size_type NN, typename = std::enable_if_t<isContainer(S) && dimensionsMatch(M, N, MM, NN)>>
+    template<size_type MM, size_type NN>
+        requires(isContainer(S) && dimensionsMatch(M, N, MM, NN))
     explicit MatrixImplementation(const T (&array)[MM][NN]) : dataStorage_{array}
     {
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
-    MatrixImplementation(size_type rows, size_type columns, const T& fillValue = dansandu::math::additiveIdentity<T>)
+    MatrixImplementation(size_type rows, size_type columns, const T& fillValue = additiveIdentity<T>)
+        requires(isContainer(S))
         : dataStorage_{rows, columns, fillValue}
     {
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isHeapContainer(S), TT>>
     MatrixImplementation(size_type rows, size_type columns, std::vector<T> buffer)
+        requires(isHeapContainer(S))
         : dataStorage_{rows, columns, std::move(buffer)}
     {
     }
 
-    template<typename IteratorBegin, typename IteratorEnd, typename TT = T,
-             typename = std::enable_if_t<isContainer(S), TT>>
+    template<typename IteratorBegin, typename IteratorEnd>
+        requires(isContainer(S))
     MatrixImplementation(size_type rows, size_type columns, IteratorBegin sourceBegin, IteratorEnd sourceEnd)
         : dataStorage_{rows, columns, sourceBegin, sourceEnd}
     {
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
     MatrixImplementation(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
                          size_type sourceColumnCount, T* viewBegin, int* const referenceCount)
+        requires(isView(S))
         : dataStorage_{viewRowCount, viewColumnCount, sourceRowCount, sourceColumnCount, viewBegin, referenceCount}
     {
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isConstantView(S), TT>>
     MatrixImplementation(size_type viewRowCount, size_type viewColumnCount, size_type sourceRowCount,
                          size_type sourceColumnCount, const T* viewBegin, int* const referenceCount)
+        requires(isConstantView(S))
         : dataStorage_{viewRowCount, viewColumnCount, sourceRowCount, sourceColumnCount, viewBegin, referenceCount}
     {
     }
 
-    template<
-        size_type MM, size_type NN, DataStorageStrategy SS,
-        std::enable_if_t<isContainer(S) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS), int> = 0>
+    MatrixImplementation(const MatrixImplementation& other) = default;
+
+    MatrixImplementation(MatrixImplementation&& other) noexcept = default;
+
+    template<size_type MM, size_type NN, DataStorageStrategy SS>
+        requires(isContainer(S) && dimensionsMatch(M, N, MM, NN) && isDifferentInstantiation(M, N, S, MM, NN, SS))
     explicit MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& other)
         : dataStorage_{other.rowCount(), other.columnCount(), other.cbegin(), other.cend()}
     {
     }
 
-    template<
-        size_type MM, size_type NN, DataStorageStrategy SS,
-        std::enable_if_t<
-            isView(S) && isContainer(SS) && dimensionsMatch(M, N, MM, NN) && (M != MM || N != NN || S != SS), int> = 0>
+    template<size_type MM, size_type NN, DataStorageStrategy SS>
+        requires(isView(S) && isContainer(SS) && dimensionsMatch(M, N, MM, NN) &&
+                 isDifferentInstantiation(M, N, S, MM, NN, SS))
     MatrixImplementation(MatrixImplementation<T, MM, NN, SS>& other)
         : dataStorage_{other.rowCount(),          other.columnCount(), other.sourceRowCount(),
                        other.sourceColumnCount(), other.data(),        other.referenceCount()}
     {
     }
 
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             std::enable_if_t<(isConstantView(S) || (isView(S) && isView(SS))) && dimensionsMatch(M, N, MM, NN) &&
-                                  (M != MM || N != NN || S != SS),
-                              int> = 0>
+    template<size_type MM, size_type NN, DataStorageStrategy SS>
+        requires((isConstantView(S) || (isView(S) && isView(SS))) && dimensionsMatch(M, N, MM, NN) &&
+                 isDifferentInstantiation(M, N, S, MM, NN, SS))
     MatrixImplementation(const MatrixImplementation<T, MM, NN, SS>& other)
         : dataStorage_{other.rowCount(),          other.columnCount(), other.sourceRowCount(),
                        other.sourceColumnCount(), other.data(),        other.referenceCount()}
     {
     }
 
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             typename = std::enable_if_t<isView(S) && dimensionsMatch(M, N, MM, NN)>>
+    template<size_type MM, size_type NN, DataStorageStrategy SS>
+        requires(isView(S) && dimensionsMatch(M, N, MM, NN))
     void deepCopy(const MatrixImplementation<T, MM, NN, SS>& other) const
     {
-        if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+        if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
         {
             if (!matrixDimensionsMatch(*this, other))
             {
@@ -123,11 +139,11 @@ public:
         std::copy(other.cbegin(), other.cend(), begin());
     }
 
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             typename = std::enable_if_t<isContainer(S) && dimensionsMatch(M, N, MM, NN)>>
+    template<size_type MM, size_type NN, DataStorageStrategy SS>
+        requires(isContainer(S) && dimensionsMatch(M, N, MM, NN))
     auto& operator+=(const MatrixImplementation<T, MM, NN, SS>& other)
     {
-        if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+        if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
         {
             if (!matrixDimensionsMatch(*this, other))
             {
@@ -135,15 +151,16 @@ public:
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::Add{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(),
+                       [](const auto& left, const auto& right) { return left + right; });
         return *this;
     }
 
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             typename = std::enable_if_t<isView(S) && dimensionsMatch(M, N, MM, NN)>>
+    template<size_type MM, size_type NN, DataStorageStrategy SS>
+        requires(isView(S) && dimensionsMatch(M, N, MM, NN))
     auto& operator+=(const MatrixImplementation<T, MM, NN, SS>& other) const
     {
-        if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+        if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
         {
             if (!matrixDimensionsMatch(*this, other))
             {
@@ -151,15 +168,16 @@ public:
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::Add{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(),
+                       [](const auto& left, const auto& right) { return left + right; });
         return *this;
     }
 
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             typename = std::enable_if_t<isContainer(S) && dimensionsMatch(M, N, MM, NN)>>
+    template<size_type MM, size_type NN, DataStorageStrategy SS>
+        requires(isContainer(S) && dimensionsMatch(M, N, MM, NN))
     auto& operator-=(const MatrixImplementation<T, MM, NN, SS>& other)
     {
-        if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+        if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
         {
             if (!matrixDimensionsMatch(*this, other))
             {
@@ -167,15 +185,16 @@ public:
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::Subtract{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(),
+                       [](const auto& left, const auto& right) { return left - right; });
         return *this;
     }
 
-    template<size_type MM, size_type NN, DataStorageStrategy SS,
-             typename = std::enable_if_t<isView(S) && dimensionsMatch(M, N, MM, NN)>>
+    template<size_type MM, size_type NN, DataStorageStrategy SS>
+        requires(isView(S) && dimensionsMatch(M, N, MM, NN))
     auto& operator-=(const MatrixImplementation<T, MM, NN, SS>& other) const
     {
-        if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+        if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
         {
             if (!matrixDimensionsMatch(*this, other))
             {
@@ -183,56 +202,76 @@ public:
                       other.rowCount(), "x", other.columnCount(), " -- matrix dimensions do not match");
             }
         }
-        std::transform(cbegin(), cend(), other.cbegin(), begin(), dansandu::math::Subtract{});
+        std::transform(cbegin(), cend(), other.cbegin(), begin(),
+                       [](const auto& left, const auto& right) { return left - right; });
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
-    auto& operator+=(T scalar)
+    auto& operator+=(const T& scalar)
+        requires(isContainer(S))
     {
-        std::transform(cbegin(), cend(), begin(), [scalar](auto element) { return element + scalar; });
+        std::transform(cbegin(), cend(), begin(), [&](const auto& element) { return element + scalar; });
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
-    auto& operator-=(T scalar)
+    auto& operator+=(const T& scalar) const
+        requires(isView(S))
     {
-        std::transform(cbegin(), cend(), begin(), [scalar](auto element) { return element - scalar; });
+        std::transform(cbegin(), cend(), begin(), [&](const auto& element) { return element + scalar; });
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
-    auto& operator*=(T scalar)
+    auto& operator-=(const T& scalar)
+        requires(isContainer(S))
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::MultiplyBy<T>{scalar});
+        std::transform(cbegin(), cend(), begin(), [&](const auto& element) { return element - scalar; });
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
-    auto& operator*=(T scalar) const
+    auto& operator-=(const T& scalar) const
+        requires(isView(S))
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::MultiplyBy<T>{scalar});
+        std::transform(cbegin(), cend(), begin(), [&](const auto& element) { return element - scalar; });
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
-    auto& operator/=(T scalar)
+    auto& operator*=(const T& scalar)
+        requires(isContainer(S))
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::DivideBy<T>{scalar});
+        std::transform(cbegin(), cend(), begin(), [&](const auto& element) { return element * scalar; });
         return *this;
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
-    auto& operator/=(T scalar) const
+    auto& operator*=(const T& scalar) const
+        requires(isView(S))
     {
-        std::transform(cbegin(), cend(), begin(), dansandu::math::DivideBy<T>{scalar});
+        std::transform(cbegin(), cend(), begin(), [&](const auto& element) { return element * scalar; });
         return *this;
     }
 
-    auto operator-() const;
+    auto& operator/=(const T& scalar)
+        requires(isContainer(S))
+    {
+        std::transform(cbegin(), cend(), begin(), [&](const auto& element) { return element / scalar; });
+        return *this;
+    }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && !isNullMatrix(M, N), TT>>
+    auto& operator/=(const T& scalar) const
+        requires(isView(S))
+    {
+        std::transform(cbegin(), cend(), begin(), [&](const auto& element) { return element / scalar; });
+        return *this;
+    }
+
+    auto operator-() const
+    {
+        auto copy = Matrix<T, M, N>{*this};
+        std::transform(cbegin(), cend(), copy.begin(), [](const auto& element) { return -element; });
+        return copy;
+    }
+
     auto& operator()(size_type row, size_type column)
+        requires(isContainer(S) && !isNullMatrix(M, N))
     {
         if (canSubscript(rowCount(), columnCount(), row, column))
         {
@@ -245,8 +284,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S) && !isNullMatrix(M, N), TT>>
     auto& operator()(size_type row, size_type column) const
+        requires(isView(S) && !isNullMatrix(M, N))
     {
         if (canSubscript(rowCount(), columnCount(), row, column))
         {
@@ -259,8 +298,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<!isView(S) && !isNullMatrix(M, N), TT>>
     const auto& operator()(size_type row, size_type column) const
+        requires(!isView(S) && !isNullMatrix(M, N))
     {
         if (canSubscript(rowCount(), columnCount(), row, column))
         {
@@ -273,8 +312,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVector(M, N), TT>>
     auto& operator()(size_type coordinate)
+        requires(isContainer(S) && isVector(M, N))
     {
         if (canSubscript(rowCount(), columnCount(), coordinate))
         {
@@ -287,8 +326,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S) && isVector(M, N), TT>>
     auto& operator()(size_type coordinate) const
+        requires(isView(S) && isVector(M, N))
     {
         if (canSubscript(rowCount(), columnCount(), coordinate))
         {
@@ -301,8 +340,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<!isView(S) && isVector(M, N), TT>>
     const auto& operator()(size_type coordinate) const
+        requires(!isView(S) && isVector(M, N))
     {
         if (canSubscript(rowCount(), columnCount(), coordinate))
         {
@@ -335,8 +374,8 @@ public:
         return dataStorage_.sourceColumnCount();
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isVector(M, N), TT>>
     auto length() const
+        requires(isVector(M, N))
     {
         if (rowCount() == 1 || columnCount() == 1)
         {
@@ -348,44 +387,44 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto& unsafeSubscript(size_type row, size_type column)
+        requires(isContainer(S))
     {
         return dataStorage_.unsafeSubscript(row, column);
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
     auto& unsafeSubscript(size_type row, size_type column) const
+        requires(isView(S))
     {
         return dataStorage_.unsafeSubscript(row, column);
     }
 
-    template<typename TT = T, typename = std::enable_if_t<!isView(S), TT>>
     const auto& unsafeSubscript(size_type row, size_type column) const
+        requires(!isView(S))
     {
         return dataStorage_.unsafeSubscript(row, column);
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto& unsafeSubscript(size_type coordinate)
+        requires(isContainer(S))
     {
         return dataStorage_.unsafeSubscript(coordinate);
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S), TT>>
     auto& unsafeSubscript(size_type coordinate) const
+        requires(isView(S))
     {
         return dataStorage_.unsafeSubscript(coordinate);
     }
 
-    template<typename TT = T, typename = std::enable_if_t<!isView(S), TT>>
     const auto& unsafeSubscript(size_type coordinate) const
+        requires(!isView(S))
     {
         return dataStorage_.unsafeSubscript(coordinate);
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVectorOfMinimumLength(M, N, 1), TT>>
     auto& x()
+        requires(isContainer(S) && isVectorOfMinimumLength(M, N, 1))
     {
         if (canSubscript(rowCount(), columnCount(), 0))
         {
@@ -397,8 +436,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S) && isVectorOfMinimumLength(M, N, 1), TT>>
     auto& x() const
+        requires(isView(S) && isVectorOfMinimumLength(M, N, 1))
     {
         if (canSubscript(rowCount(), columnCount(), 0))
         {
@@ -410,8 +449,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<!isView(S) && isVectorOfMinimumLength(M, N, 1), TT>>
     const auto& x() const
+        requires(!isView(S) && isVectorOfMinimumLength(M, N, 1))
     {
         if (canSubscript(rowCount(), columnCount(), 0))
         {
@@ -423,8 +462,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVectorOfMinimumLength(M, N, 2), TT>>
     auto& y()
+        requires(isContainer(S) && isVectorOfMinimumLength(M, N, 2))
     {
         if (canSubscript(rowCount(), columnCount(), 1))
         {
@@ -436,8 +475,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S) && isVectorOfMinimumLength(M, N, 2), TT>>
     auto& y() const
+        requires(isView(S) && isVectorOfMinimumLength(M, N, 2))
     {
         if (canSubscript(rowCount(), columnCount(), 1))
         {
@@ -449,8 +488,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<!isView(S) && isVectorOfMinimumLength(M, N, 2), TT>>
     const auto& y() const
+        requires(!isView(S) && isVectorOfMinimumLength(M, N, 2))
     {
         if (canSubscript(rowCount(), columnCount(), 1))
         {
@@ -462,8 +501,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVectorOfMinimumLength(M, N, 3), TT>>
     auto& z()
+        requires(isContainer(S) && isVectorOfMinimumLength(M, N, 3))
     {
         if (canSubscript(rowCount(), columnCount(), 2))
         {
@@ -475,8 +514,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S) && isVectorOfMinimumLength(M, N, 3), TT>>
     auto& z() const
+        requires(isView(S) && isVectorOfMinimumLength(M, N, 3))
     {
         if (canSubscript(rowCount(), columnCount(), 2))
         {
@@ -488,8 +527,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<!isView(S) && isVectorOfMinimumLength(M, N, 3), TT>>
     const auto& z() const
+        requires(!isView(S) && isVectorOfMinimumLength(M, N, 3))
     {
         if (canSubscript(rowCount(), columnCount(), 2))
         {
@@ -501,8 +540,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S) && isVectorOfMinimumLength(M, N, 4), TT>>
     auto& w()
+        requires(isContainer(S) && isVectorOfMinimumLength(M, N, 4))
     {
         if (canSubscript(rowCount(), columnCount(), 3))
         {
@@ -514,8 +553,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isView(S) && isVectorOfMinimumLength(M, N, 4), TT>>
     auto& w() const
+        requires(isView(S) && isVectorOfMinimumLength(M, N, 4))
     {
         if (canSubscript(rowCount(), columnCount(), 3))
         {
@@ -527,8 +566,8 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<!isView(S) && isVectorOfMinimumLength(M, N, 4), TT>>
     const auto& w() const
+        requires(!isView(S) && isVectorOfMinimumLength(M, N, 4))
     {
         if (canSubscript(rowCount(), columnCount(), 3))
         {
@@ -540,14 +579,14 @@ public:
         }
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto begin()
+        requires(isContainer(S))
     {
         return dataStorage_.begin();
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto end()
+        requires(isContainer(S))
     {
         return dataStorage_.end();
     }
@@ -572,8 +611,8 @@ public:
         return dataStorage_.cend();
     }
 
-    template<typename TT = T, typename = std::enable_if_t<isContainer(S), TT>>
     auto data()
+        requires(isContainer(S))
     {
         return dataStorage_.data();
     }
@@ -588,71 +627,113 @@ public:
         return dataStorage_.referenceCount();
     }
 
-    std::string toString() const;
+    void toStream(std::ostream& stream) const
+    {
+        const auto printRow = [&](const size_type row)
+        {
+            stream << "[";
+            if (columnCount() > 0)
+            {
+                stream << unsafeSubscript(row, 0);
+            }
+            for (auto column = 1; column < columnCount(); ++column)
+            {
+                stream << ", " << unsafeSubscript(row, column);
+            }
+            stream << "]";
+        };
+
+        stream << "[";
+        if (rowCount() > 0)
+        {
+            printRow(0);
+        }
+        for (auto row = 1; row < rowCount(); ++row)
+        {
+            stream << ", ";
+            printRow(row);
+        }
+        stream << "]";
+    }
+
+    std::string toString() const
+    {
+        auto stream = std::ostringstream{};
+        toStream(stream);
+        return stream.str();
+    }
 
 private:
     DataStorage<T, M, N, S> dataStorage_;
 };
 
-template<typename T = double, size_type M = dynamic, size_type N = dynamic>
-using Matrix = MatrixImplementation<T, M, N, DataStorageStrategyFor<T, M, N>::value>;
-
-template<typename T = double, size_type M = dynamic, size_type N = dynamic>
-using MatrixView = MatrixImplementation<T, M, N, DataStorageStrategy::view>;
-
-template<typename T = double, size_type M = dynamic, size_type N = dynamic>
-using ConstantMatrixView = MatrixImplementation<T, M, N, DataStorageStrategy::constantView>;
-
-template<typename T, size_type M, size_type N, size_type MM, size_type NN>
-using StaticMatrix =
-    MatrixImplementation<T, M != dynamic ? M : MM, N != dynamic ? N : NN, DataStorageStrategyFor<T, M, N>::value>;
-
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN) && std::is_integral_v<T>>>
+         DataStorageStrategy SS>
+    requires(dimensionsMatch(M, N, MM, NN) && std::is_integral_v<T>)
 bool operator==(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
-    return a.rowCount() == b.rowCount() && a.columnCount() == b.columnCount() &&
-           std::equal(a.cbegin(), a.cend(), b.cbegin());
+    if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
+    {
+        if (!matrixDimensionsMatch(a, b))
+        {
+            THROW(std::logic_error, "cannot compare matrices ", a.rowCount(), "x", a.columnCount(), " and ",
+                  b.rowCount(), "x", b.columnCount(), " -- matrix dimensions do not match");
+        }
+    }
+    return std::equal(a.cbegin(), a.cend(), b.cbegin());
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN) && std::is_integral_v<T>>>
+         DataStorageStrategy SS>
+    requires(dimensionsMatch(M, N, MM, NN) && std::is_integral_v<T>)
 bool operator!=(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
     return !(a == b);
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(dimensionsMatch(M, N, MM, NN))
 bool operator<(const MatrixImplementation<T, M, N, S>& left, const MatrixImplementation<T, MM, NN, SS>& right)
 {
-    return left.rowCount() == right.rowCount() && left.columnCount() == right.columnCount() &&
-           std::equal(left.cbegin(), left.cend(), right.cbegin(), [](const auto a, const auto b) { return a < b; });
+    if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
+    {
+        if (!matrixDimensionsMatch(left, right))
+        {
+            THROW(std::logic_error, "cannot compare matrices ", left.rowCount(), "x", left.columnCount(), " and ",
+                  right.rowCount(), "x", right.columnCount(), " -- matrix dimensions do not match");
+        }
+    }
+    return std::equal(left.cbegin(), left.cend(), right.cbegin(), [](const auto& a, const auto& b) { return a < b; });
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(dimensionsMatch(M, N, MM, NN))
 bool operator>(const MatrixImplementation<T, M, N, S>& left, const MatrixImplementation<T, MM, NN, SS>& right)
 {
     return right < left;
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(dimensionsMatch(M, N, MM, NN))
 bool operator<=(const MatrixImplementation<T, M, N, S>& left, const MatrixImplementation<T, MM, NN, SS>& right)
 {
     return !(right < left);
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(dimensionsMatch(M, N, MM, NN))
 bool operator>=(const MatrixImplementation<T, M, N, S>& left, const MatrixImplementation<T, MM, NN, SS>& right)
 {
     return !(left < right);
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<N == MM || N == dynamic || MM == dynamic>>
+         DataStorageStrategy SS>
+    requires(N == MM || N == dynamic || MM == dynamic)
 auto operator*(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
     if constexpr (N == dynamic || MM == dynamic)
@@ -678,37 +759,28 @@ auto operator*(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementa
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
-auto MatrixImplementation<T, M, N, S>::operator-() const
-{
-    auto copy = Matrix<T, M, N>{*this};
-    std::transform(cbegin(), cend(), copy.begin(),
-                   dansandu::math::MultiplyBy<T>{-dansandu::math::multiplicativeIdentity<T>});
-    return copy;
-}
-
-template<typename T, size_type M, size_type N, DataStorageStrategy S>
-auto operator+(const MatrixImplementation<T, M, N, S>& matrix, T scalar)
+auto operator+(const MatrixImplementation<T, M, N, S>& matrix, const T& scalar)
 {
     auto result = Matrix<T, M, N>{matrix};
     return result += scalar;
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
-auto operator+(T scalar, const MatrixImplementation<T, M, N, S>& matrix)
+auto operator+(const T& scalar, const MatrixImplementation<T, M, N, S>& matrix)
 {
     auto result = Matrix<T, M, N>{matrix};
     return result += scalar;
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
-auto operator-(const MatrixImplementation<T, M, N, S>& matrix, T scalar)
+auto operator-(const MatrixImplementation<T, M, N, S>& matrix, const T& scalar)
 {
     auto result = Matrix<T, M, N>{matrix};
     return result -= scalar;
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
-auto operator-(T scalar, const MatrixImplementation<T, M, N, S>& matrix)
+auto operator-(const T& scalar, const MatrixImplementation<T, M, N, S>& matrix)
 {
     auto result = Matrix<T, M, N>{matrix};
     std::transform(result.cbegin(), result.cend(), result.begin(), [scalar](auto element) { return scalar - element; });
@@ -716,21 +788,22 @@ auto operator-(T scalar, const MatrixImplementation<T, M, N, S>& matrix)
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
-auto operator*(const MatrixImplementation<T, M, N, S>& matrix, T scalar)
+auto operator*(const MatrixImplementation<T, M, N, S>& matrix, const T& scalar)
 {
     auto result = Matrix<T, M, N>{matrix};
     return result *= scalar;
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
-auto operator*(T scalar, const MatrixImplementation<T, M, N, S>& matrix)
+auto operator*(const T& scalar, const MatrixImplementation<T, M, N, S>& matrix)
 {
     auto result = Matrix<T, M, N>{matrix};
     return result *= scalar;
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(dimensionsMatch(M, N, MM, NN))
 auto operator+(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
     auto result = StaticMatrix<T, M, N, MM, NN>{a};
@@ -738,7 +811,8 @@ auto operator+(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementa
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(dimensionsMatch(M, N, MM, NN))
 auto operator-(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
     auto result = StaticMatrix<T, M, N, MM, NN>{a};
@@ -796,7 +870,8 @@ auto abs(const MatrixImplementation<T, M, N, S>& matrix)
     return result;
 }
 
-template<typename T, size_type M, size_type N, DataStorageStrategy S, typename = std::enable_if_t<isVector(M, N)>>
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+    requires(isVector(M, N))
 auto magnitude(const MatrixImplementation<T, M, N, S>& matrix)
 {
     if constexpr (M == dynamic || N == dynamic)
@@ -807,7 +882,7 @@ auto magnitude(const MatrixImplementation<T, M, N, S>& matrix)
                   matrix.columnCount());
         }
     }
-    auto sum = dansandu::math::additiveIdentity<T>;
+    auto sum = additiveIdentity<T>;
     for (const auto element : matrix)
     {
         sum += element * element;
@@ -815,7 +890,8 @@ auto magnitude(const MatrixImplementation<T, M, N, S>& matrix)
     return std::sqrt(sum);
 }
 
-template<typename T, size_type M, size_type N, DataStorageStrategy S, typename = std::enable_if_t<isVector(M, N)>>
+template<typename T, size_type M, size_type N, DataStorageStrategy S>
+    requires(isVector(M, N))
 auto normalized(const MatrixImplementation<T, M, N, S>& matrix)
 {
     if constexpr (M == dynamic || N == dynamic)
@@ -826,19 +902,20 @@ auto normalized(const MatrixImplementation<T, M, N, S>& matrix)
                   matrix.columnCount());
         }
     }
-    auto sum = dansandu::math::additiveIdentity<T>;
+    auto sum = additiveIdentity<T>;
     for (const auto element : matrix)
     {
         sum += element * element;
     }
-    return matrix * (dansandu::math::multiplicativeIdentity<T> / std::sqrt(sum));
+    return matrix * (multiplicativeIdentity<T> / std::sqrt(sum));
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<vectorsOfEqualLength(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(vectorsOfEqualLength(M, N, MM, NN))
 auto dotProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
-    if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+    if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
     {
         if (!vectorsOfEqualLength(a, b))
         {
@@ -846,7 +923,7 @@ auto dotProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplement
                   " and ", b.rowCount(), "x", b.columnCount());
         }
     }
-    auto sum = dansandu::math::additiveIdentity<T>;
+    auto sum = additiveIdentity<T>;
     auto left = a.cbegin();
     auto right = b.cbegin();
     while (left != a.cend())
@@ -857,10 +934,11 @@ auto dotProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplement
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<vectorsOfEqualLength(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(vectorsOfEqualLength(M, N, MM, NN))
 auto distance(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
-    if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+    if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
     {
         if (!vectorsOfEqualLength(a, b))
         {
@@ -868,7 +946,7 @@ auto distance(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementat
                   b.rowCount(), "x", b.columnCount());
         }
     }
-    auto sum = dansandu::math::additiveIdentity<T>;
+    auto sum = additiveIdentity<T>;
     auto left = a.cbegin();
     auto leftEnd = a.cend();
     auto right = b.cbegin();
@@ -883,10 +961,11 @@ auto distance(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementat
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
-         DataStorageStrategy SS, typename = std::enable_if_t<vectorsOfLength3(M, N, MM, NN)>>
+         DataStorageStrategy SS>
+    requires(vectorsOfLength3(M, N, MM, NN))
 auto crossProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementation<T, MM, NN, SS>& b)
 {
-    if constexpr (M == dynamic || N == dynamic || MM == dynamic || NN == dynamic)
+    if constexpr (isDynamicMatrix(M, N) || isDynamicMatrix(MM, NN))
     {
         if (!vectorsOfEqualLength(a, b) && a.length() == 3)
         {
@@ -919,39 +998,8 @@ auto transposed(const MatrixImplementation<T, M, N, S>& matrix)
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
 std::ostream& operator<<(std::ostream& stream, const MatrixImplementation<T, M, N, S>& matrix)
 {
-    auto printRow = [&](auto row)
-    {
-        stream << "[";
-        if (matrix.columnCount() > 0)
-        {
-            stream << matrix.unsafeSubscript(row, 0);
-        }
-        for (auto column = 1; column < matrix.columnCount(); ++column)
-        {
-            stream << ", " << matrix.unsafeSubscript(row, column);
-        }
-        stream << "]";
-    };
-
-    stream << "[";
-    if (matrix.rowCount() > 0)
-    {
-        printRow(0);
-    }
-    for (auto row = 1; row < matrix.rowCount(); ++row)
-    {
-        stream << ", ";
-        printRow(row);
-    }
-    return stream << "]";
-}
-
-template<typename T, size_type M, size_type N, DataStorageStrategy S>
-std::string MatrixImplementation<T, M, N, S>::toString() const
-{
-    auto stream = std::ostringstream{};
-    stream << *this;
-    return stream.str();
+    matrix.toStream(stream);
+    return stream;
 }
 
 }

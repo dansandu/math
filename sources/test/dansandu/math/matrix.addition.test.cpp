@@ -52,7 +52,7 @@ TEST_CASE("matrix.addition")
             const auto a = Matrix<int, 3, 1>{{10, 15, 20}};
             const auto b = Matrix<int>{{120, 105}};
 
-            REQUIRE_THROW(a + b, std::logic_error);
+            REQUIRE_THROW(std::logic_error, a + b);
         }
     }
 
@@ -75,7 +75,7 @@ TEST_CASE("matrix.addition")
 
             const auto b = Matrix<int, dynamic, 3>{{10, 100, 1000}};
 
-            REQUIRE_THROW(a + b, std::logic_error);
+            REQUIRE_THROW(std::logic_error, a + b);
         }
     }
 
@@ -98,7 +98,7 @@ TEST_CASE("matrix.addition")
 
             const auto b = Matrix<int>{{30, 40, 50}};
 
-            REQUIRE_THROW(a + b, std::logic_error);
+            REQUIRE_THROW(std::logic_error, a + b);
         }
     }
 

@@ -38,23 +38,9 @@ TEST_CASE("matrix.equality")
             REQUIRE(matrix == other);
         }
 
-        SECTION("to dynamic rows mismatch")
-        {
-            const auto other = Matrix<int, dynamic, 2>{{{11, 13}, {17, 19}}};
-
-            REQUIRE(matrix != other);
-        }
-
-        SECTION("to dynamic columns mismatch")
-        {
-            const auto other = Matrix<int, 3, dynamic>{{11, 13, 17}};
-
-            REQUIRE(matrix != other);
-        }
-
         SECTION("to dynamic rows and columns mismatch")
         {
-            const auto other = Matrix<int>{{{11, 13}, {17, 19}}};
+            const auto other = Matrix<int>{{{11, 13}, {17, 19}, {23, 0}}};
 
             REQUIRE(matrix != other);
         }
@@ -83,6 +69,13 @@ TEST_CASE("matrix.equality")
             const auto other = Matrix<int>{{{31, 37, 41}, {43, 47, 53}}};
 
             REQUIRE(matrix == other);
+        }
+
+        SECTION("to dynamic rows and columns mismatch")
+        {
+            const auto other = Matrix<int>{{{31, 37, 41}, {43, 0, 53}}};
+
+            REQUIRE(matrix != other);
         }
     }
 }
