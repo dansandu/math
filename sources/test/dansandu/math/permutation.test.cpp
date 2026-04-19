@@ -29,7 +29,7 @@ TEST_CASE("permutation")
 
         SECTION("negative length")
         {
-            REQUIRE_THROW(getIdentityPermutation(-2), std::logic_error);
+            REQUIRE_THROW(std::logic_error, getIdentityPermutation(-2));
         }
     }
 

@@ -38,6 +38,12 @@ constexpr auto vectorsOfEqualLength(const MatrixImplementation<T, M, N, S>& a,
            a.length() == b.length();
 }
 
+constexpr auto isDifferentInstantiation(size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
+                                        DataStorageStrategy SS)
+{
+    return M != MM || N != NN || S != SS;
+}
+
 constexpr auto isContainer(DataStorageStrategy strategy)
 {
     return strategy == DataStorageStrategy::stack || strategy == DataStorageStrategy::heap;
@@ -56,6 +62,11 @@ constexpr auto isView(DataStorageStrategy strategy)
 constexpr auto isConstantView(DataStorageStrategy strategy)
 {
     return strategy == DataStorageStrategy::constantView;
+}
+
+constexpr auto isDynamicMatrix(size_type m, size_type n)
+{
+    return m == dynamic || n == dynamic;
 }
 
 constexpr auto isNullMatrix(size_type m, size_type n)

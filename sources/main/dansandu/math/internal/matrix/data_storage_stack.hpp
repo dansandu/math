@@ -21,16 +21,18 @@ public:
 
     DataStorage() : DimensionalityStorage<T, M, N>{M, N}, referenceCount_{0}
     {
-        std::fill(begin(), end(), dansandu::math::additiveIdentity<T>);
+        std::fill(begin(), end(), additiveIdentity<T>);
     }
 
-    template<size_type L, typename = std::enable_if_t<isVectorOfLength(M, N, L)>>
+    template<size_type L>
+        requires(isVectorOfLength(M, N, L))
     explicit DataStorage(const T (&array)[L]) : DimensionalityStorage<T, M, N>{M, N}, referenceCount_{0}
     {
         std::copy(array, array + L, begin());
     }
 
-    template<size_type MM, size_type NN, typename = std::enable_if_t<dimensionsMatch(M, N, MM, NN)>>
+    template<size_type MM, size_type NN>
+        requires(dimensionsMatch(M, N, MM, NN))
     explicit DataStorage(const T (&array)[MM][NN]) : DimensionalityStorage<T, M, N>{MM, NN}, referenceCount_{0}
     {
         for (auto row = 0; row < MM; ++row)
@@ -47,8 +49,8 @@ public:
     {
         if (rows < 0 || columns < 0 || M != rows || N != columns)
         {
-            THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
-                  " and must match static rows and columns if not dynamic");
+            THROW(std::logic_error, "Matrix dimensions do not match: target matrix ", rowCount(), "x", columnCount(),
+                  ", source matrix ", rows, "x", columns);
         }
         std::fill(begin(), end(), fillValue);
     }
@@ -59,8 +61,8 @@ public:
     {
         if (rows < 0 || columns < 0 || M != rows || N != columns)
         {
-            THROW(std::out_of_range, "matrix dimensions cannot be negative ", rows, "x", columns,
-                  " and must match static rows and columns if not dynamic");
+            THROW(std::logic_error, "Matrix dimensions do not match: target matrix ", rowCount(), "x", columnCount(),
+                  ", source matrix ", rows, "x", columns);
         }
         auto iterator = begin();
         auto sourceIterator = sourceBegin;

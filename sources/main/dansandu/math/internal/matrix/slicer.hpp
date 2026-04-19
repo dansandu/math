@@ -11,10 +11,9 @@ class Slicer
 {
 public:
     template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
-    static std::enable_if_t<
-        sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) && subinterval(BeginRow, Rows, M) &&
-            subinterval(BeginColumn, Columns, N),
-        std::conditional_t<isView(S), MatrixView<T, Rows, Columns>, ConstantMatrixView<T, Rows, Columns>>>
+        requires(sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) && subinterval(BeginRow, Rows, M) &&
+                 subinterval(BeginColumn, Columns, N))
+    static std::conditional_t<isView(S), MatrixView<T, Rows, Columns>, ConstantMatrixView<T, Rows, Columns>>
     slice(const MatrixImplementation<T, M, N, S>& matrix, A... arguments)
     {
         const auto [viewBeginRow, viewBeginColumn, viewRows, viewColumns] = unpackArguments(matrix, arguments...);
@@ -30,10 +29,9 @@ public:
     }
 
     template<typename T, size_type M, size_type N, DataStorageStrategy S, typename... A>
-    static std::enable_if_t<sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) && isContainer(S) &&
-                                subinterval(BeginRow, Rows, M) && subinterval(BeginColumn, Columns, N),
-                            MatrixView<T, Rows, Columns>>
-    slice(MatrixImplementation<T, M, N, S>& matrix, A... arguments)
+        requires(sizeof...(A) == dynamics(BeginRow, BeginColumn, Rows, Columns) && isContainer(S) &&
+                 subinterval(BeginRow, Rows, M) && subinterval(BeginColumn, Columns, N))
+    static MatrixView<T, Rows, Columns> slice(MatrixImplementation<T, M, N, S>& matrix, A... arguments)
     {
         const auto [viewBeginRow, viewBeginColumn, viewRows, viewColumns] = unpackArguments(matrix, arguments...);
 

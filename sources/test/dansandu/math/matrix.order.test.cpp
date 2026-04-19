@@ -10,11 +10,11 @@ TEST_CASE("matrix.order")
     {
         SECTION("static with static")
         {
-            auto a = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
+            const auto a = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
 
-            auto b = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
+            const auto b = Matrix<int, 2, 3>{{{1, 2, 3}, {11, 12, 13}}};
 
-            auto c = Matrix<int, 2, 3>{{{1, 2, 3}, {11, -1, 13}}};
+            const auto c = Matrix<int, 2, 3>{{{1, 2, 3}, {11, -1, 13}}};
 
             REQUIRE(a == b);
 
@@ -23,11 +23,11 @@ TEST_CASE("matrix.order")
 
         SECTION("mixed static with dynamic")
         {
-            auto a = Matrix<int, 1, dynamic>{{3, 5, 7}};
+            const auto a = Matrix<int, dynamic, 1>{{3, 5, 7}};
 
-            auto b = Matrix<int, dynamic, 3>{{3, 5, 7}};
+            const auto b = Matrix<int, 3, dynamic>{{3, 5, 7}};
 
-            auto c = Matrix<int, dynamic, 3>{{{3, 5, 7}, {3, 5, 7}}};
+            const auto c = Matrix<int>{{3, 5, 0}};
 
             REQUIRE(a == b);
 
@@ -36,11 +36,11 @@ TEST_CASE("matrix.order")
 
         SECTION("dynamic with dynamic")
         {
-            auto a = Matrix<int>{{120, 105, 130, 150}};
+            const auto a = Matrix<int>{{120, 105, 130, 150}};
 
-            auto b = Matrix<int>{{120, 105, 130, 150}};
+            const auto b = Matrix<int>{{120, 105, 130, 150}};
 
-            auto c = Matrix<int>{{{120, 105}, {130, 150}}};
+            const auto c = Matrix<int>{{120, 105, 130, 0}};
 
             REQUIRE(a == b);
 

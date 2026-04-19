@@ -46,7 +46,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, 2, dynamic>{{{3, 5, 7, 7}, {11, 13, 17, 17}}};
                 auto b = Matrix<int, 3, 1>{{23, 29, 31}};
 
-                REQUIRE_THROW(a * b, std::logic_error);
+                REQUIRE_THROW(std::logic_error, a * b);
             }
         }
 
@@ -66,7 +66,7 @@ TEST_CASE("matrix")
                 auto a = Matrix<int, 1, dynamic>{{3, 5}};
                 auto b = Matrix<int, dynamic, 2>{{{1, 2}, {3, 4}, {5, 6}}};
 
-                REQUIRE_THROW(a * b, std::logic_error);
+                REQUIRE_THROW(std::logic_error, a * b);
             }
         }
     }
@@ -126,7 +126,7 @@ TEST_CASE("matrix")
             {
                 auto a = Matrix<double, dynamic, dynamic>{{{3.0, 5.0}, {-2.0, 0.0}}};
 
-                REQUIRE_THROW(magnitude(a), std::logic_error);
+                REQUIRE_THROW(std::logic_error, magnitude(a));
             }
         }
     }
@@ -165,7 +165,7 @@ TEST_CASE("matrix")
             {
                 auto a = Matrix<double, dynamic, dynamic>{{{3.0, 5.0}, {-2.0, 0.0}}};
 
-                REQUIRE_THROW(normalized(a), std::logic_error);
+                REQUIRE_THROW(std::logic_error, normalized(a));
             }
         }
     }
@@ -228,9 +228,9 @@ TEST_CASE("matrix")
                 auto b = Matrix<int, dynamic, dynamic>{{10, 100}};
                 auto c = Matrix<int, dynamic, dynamic>{{10, 100, 1000}};
 
-                REQUIRE_THROW(dotProduct(a, b), std::logic_error);
+                REQUIRE_THROW(std::logic_error, dotProduct(a, b));
 
-                REQUIRE_THROW(dotProduct(b, c), std::logic_error);
+                REQUIRE_THROW(std::logic_error, dotProduct(b, c));
             }
         }
     }
@@ -271,9 +271,9 @@ TEST_CASE("matrix")
                 auto b = Matrix<int, 1, dynamic>{{10, 100, 3}};
                 auto c = Matrix<int, 1, dynamic>{{10, 100}};
 
-                REQUIRE_THROW(crossProduct(a, b), std::logic_error);
+                REQUIRE_THROW(std::logic_error, crossProduct(a, b));
 
-                REQUIRE_THROW(crossProduct(b, c), std::logic_error);
+                REQUIRE_THROW(std::logic_error, crossProduct(b, c));
             }
         }
     }
