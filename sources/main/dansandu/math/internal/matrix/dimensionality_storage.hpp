@@ -5,15 +5,14 @@
 namespace dansandu::math::matrix
 {
 
-template<typename T, size_type M, size_type N>
-struct DataStorageStrategyFor
+template<typename T>
+constexpr auto getDataStorageStrategy(const size_type m, const size_type n)
 {
-    constexpr static auto stackBytes = static_cast<size_type>(32);
+    constexpr auto stackBytesThreshold = static_cast<size_type>(32);
 
-    constexpr static auto value = (M == dynamic || N == dynamic || M * N * sizeof(T) > stackBytes)
-                                      ? DataStorageStrategy::heap
-                                      : DataStorageStrategy::stack;
-};
+    return (m == dynamic || n == dynamic || m * n * sizeof(T) > stackBytesThreshold) ? DataStorageStrategy::heap
+                                                                                     : DataStorageStrategy::stack;
+}
 
 template<typename T, size_type M, size_type N>
 class DimensionalityStorage;

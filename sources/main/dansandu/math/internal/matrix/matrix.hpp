@@ -15,7 +15,7 @@ namespace dansandu::math::matrix
 {
 
 template<typename T = double, size_type M = dynamic, size_type N = dynamic>
-using Matrix = MatrixImplementation<T, M, N, DataStorageStrategyFor<T, M, N>::value>;
+using Matrix = MatrixImplementation<T, M, N, getDataStorageStrategy<T>(M, N)>;
 
 template<typename T = double, size_type M = dynamic, size_type N = dynamic>
 using MatrixView = MatrixImplementation<T, M, N, DataStorageStrategy::view>;
@@ -25,7 +25,7 @@ using ConstantMatrixView = MatrixImplementation<T, M, N, DataStorageStrategy::co
 
 template<typename T, size_type M, size_type N, size_type MM, size_type NN>
 using StaticMatrix =
-    MatrixImplementation<T, M != dynamic ? M : MM, N != dynamic ? N : NN, DataStorageStrategyFor<T, M, N>::value>;
+    MatrixImplementation<T, M != dynamic ? M : MM, N != dynamic ? N : NN, getDataStorageStrategy<T>(M, N)>;
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S>
 class MatrixImplementation
