@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dansandu/ballotin/exception.hpp"
+#include "dansandu/journey/exception.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/matrix/common.hpp"
 #include "dansandu/math/internal/matrix/data_storage_constant_view.hpp"
@@ -44,6 +44,14 @@ public:
     static constexpr auto staticColumnCount = N;
 
     static constexpr auto dataStorageStrategy = S;
+
+    MatrixImplementation(const MatrixImplementation& other) = default;
+
+    MatrixImplementation(MatrixImplementation&& other) noexcept = default;
+
+    MatrixImplementation& operator=(const MatrixImplementation& other) = default;
+
+    MatrixImplementation& operator=(MatrixImplementation&& other) noexcept = default;
 
     MatrixImplementation()
         requires(isContainer(S))
@@ -94,10 +102,6 @@ public:
         : dataStorage_{viewRowCount, viewColumnCount, sourceRowCount, sourceColumnCount, viewBegin, referenceCount}
     {
     }
-
-    MatrixImplementation(const MatrixImplementation& other) = default;
-
-    MatrixImplementation(MatrixImplementation&& other) noexcept = default;
 
     template<size_type MM, size_type NN, DataStorageStrategy SS>
         requires(isContainer(S) && dimensionsMatch(M, N, MM, NN) && isDifferentInstantiation(M, N, S, MM, NN, SS))

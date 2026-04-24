@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dansandu/ballotin/exception.hpp"
+#include "dansandu/journey/exception.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/matrix/common.hpp"
 #include "dansandu/math/internal/matrix/dimensionality_storage.hpp"
@@ -47,9 +47,41 @@ public:
         ++*referenceCount_;
     }
 
-    ~DataStorage()
+    ~DataStorage() noexcept
     {
         --*referenceCount_;
+    }
+
+    DataStorage& operator=(const DataStorage& other)
+    {
+        --*referenceCount_;
+
+        DimensionalityStorage<T, M, N>::operator=(other);
+
+        viewBegin_ = other.viewBegin_;
+        sourceRowCount_ = other.sourceRowCount_;
+        sourceColumnCount_ = other.sourceColumnCount_;
+        referenceCount_ = other.referenceCount_;
+
+        ++*referenceCount_;
+
+        return *this;
+    }
+
+    DataStorage& operator=(DataStorage&& other) noexcept
+    {
+        --*referenceCount_;
+
+        DimensionalityStorage<T, M, N>::operator=(other);
+
+        viewBegin_ = other.viewBegin_;
+        sourceRowCount_ = other.sourceRowCount_;
+        sourceColumnCount_ = other.sourceColumnCount_;
+        referenceCount_ = other.referenceCount_;
+
+        ++*referenceCount_;
+
+        return *this;
     }
 
     auto& unsafeSubscript(size_type row, size_type column) const

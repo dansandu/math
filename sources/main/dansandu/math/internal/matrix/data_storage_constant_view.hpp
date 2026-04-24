@@ -44,9 +44,41 @@ public:
         ++*referenceCount_;
     }
 
-    ~DataStorage()
+    ~DataStorage() noexcept
     {
         --*referenceCount_;
+    }
+
+    DataStorage& operator=(const DataStorage& other)
+    {
+        --*referenceCount_;
+
+        DimensionalityStorage<T, M, N>::operator=(other);
+
+        viewBegin_ = other.viewBegin_;
+        sourceRowCount_ = other.sourceRowCount_;
+        sourceColumnCount_ = other.sourceColumnCount_;
+        referenceCount_ = other.referenceCount_;
+
+        ++*referenceCount_;
+
+        return *this;
+    }
+
+    DataStorage& operator=(DataStorage&& other) noexcept
+    {
+        --*referenceCount_;
+
+        DimensionalityStorage<T, M, N>::operator=(other);
+
+        viewBegin_ = other.viewBegin_;
+        sourceRowCount_ = other.sourceRowCount_;
+        sourceColumnCount_ = other.sourceColumnCount_;
+        referenceCount_ = other.referenceCount_;
+
+        ++*referenceCount_;
+
+        return *this;
     }
 
     const auto& unsafeSubscript(size_type row, size_type column) const

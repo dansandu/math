@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dansandu/ballotin/exception.hpp"
+#include "dansandu/journey/exception.hpp"
 #include "dansandu/journey/logging.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/matrix/common.hpp"
@@ -85,42 +85,41 @@ public:
     {
     }
 
+    // The other matrix data is copied so the reference count is set to zero.
     DataStorage(DataStorage&& other) noexcept
-        : DimensionalityStorage<T, M, N>{std::move(other)}, data_{std::move(other.data_)}, referenceCount_{0}
+        : DimensionalityStorage<T, M, N>{other}, data_{other.data_}, referenceCount_{0}
     {
+    }
+
+    ~DataStorage() noexcept
+    {
+        assert(referenceCount_ == 0 && "No matrix views should reference this matrix container after its life span");
     }
 
     DataStorage& operator=(const DataStorage& other)
     {
-        if (referenceCount_ != 0)
+        if (this != &other)
         {
-            THROW(std::logic_error, "there are ", referenceCount_,
-                  " matrix views still pointing to this matrix container");
+            // Matrix views referencing this matrix are still valid because the dimensions and data address haven't
+            // changed.
+
+            data_ = other.data_;
         }
-        DimensionalityStorage<T, M, N>::operator=(other);
-        data_ = other.data_;
+
         return *this;
     }
 
     DataStorage& operator=(DataStorage&& other) noexcept
     {
-        if (referenceCount_ != 0)
+        if (this != &other)
         {
-            LOG_CRITICAL("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
-                         std::to_string(std::stacktrace::current()));
-        }
-        DimensionalityStorage<T, M, N>::operator=(other);
-        data_ = other.data_;
-        return *this;
-    }
+            // Matrix views referencing this matrix are still valid because the dimensions and data address haven't
+            // changed.
 
-    ~DataStorage()
-    {
-        if (referenceCount_ != 0)
-        {
-            LOG_CRITICAL("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
-                         std::to_string(std::stacktrace::current()));
+            data_ = other.data_;
         }
+
+        return *this;
     }
 
     auto& unsafeSubscript(size_type row, size_type column)

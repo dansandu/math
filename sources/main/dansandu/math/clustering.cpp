@@ -1,5 +1,5 @@
 #include "dansandu/math/clustering.hpp"
-#include "dansandu/ballotin/exception.hpp"
+#include "dansandu/journey/exception.hpp"
 #include "dansandu/math/common.hpp"
 
 #include <algorithm>
