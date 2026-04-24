@@ -1,6 +1,7 @@
 #include "dansandu/math/matrix.hpp"
 #include "dansandu/radiance/radiance.hpp"
 
+#include <type_traits>
 #include <vector>
 
 using dansandu::math::matrix::ConstantMatrixView;
@@ -189,6 +190,8 @@ TEST_CASE("matrix.dynamic.construction")
 
         SECTION("container to container")
         {
+            REQUIRE(std::is_nothrow_move_constructible_v<Matrix<int>>);
+
             const auto matrix = Matrix<int>{std::move(original)};
 
             REQUIRE(matrix.rowCount() == 2);

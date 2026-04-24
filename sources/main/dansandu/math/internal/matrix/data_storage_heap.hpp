@@ -1,11 +1,12 @@
 #pragma once
 
-#include "dansandu/ballotin/exception.hpp"
+#include "dansandu/journey/exception.hpp"
 #include "dansandu/journey/logging.hpp"
 #include "dansandu/math/common.hpp"
 #include "dansandu/math/internal/matrix/common.hpp"
 #include "dansandu/math/internal/matrix/dimensionality_storage.hpp"
 
+#include <cassert>
 #include <stacktrace>
 #include <vector>
 
@@ -122,45 +123,57 @@ public:
     }
 
     DataStorage(DataStorage&& other) noexcept
-        : DimensionalityStorage<T, M, N>{std::move(other)}, data_{std::move(other.data_)}, referenceCount_{0}
+        : DimensionalityStorage<T, M, N>{other}, data_{std::move(other.data_)}, referenceCount_{other.referenceCount_}
     {
         other.DimensionalityStorage<T, M, N>::setRowCount(0);
         other.DimensionalityStorage<T, M, N>::setColumnCount(0);
+
+        other.referenceCount_ = 0;
+    }
+
+    ~DataStorage() noexcept
+    {
+        assert(referenceCount_ == 0 && "No matrix views should reference this matrix container after its life span");
     }
 
     DataStorage& operator=(const DataStorage& other)
     {
-        if (referenceCount_ != 0)
+        if (this != &other)
         {
-            THROW(std::logic_error, "there are ", referenceCount_,
-                  " matrix views still pointing to this matrix container");
+            assert(referenceCount_ == 0 &&
+                   "No matrix views should reference this matrix container before assigning to it");
+
+            DimensionalityStorage<T, M, N>::operator=(other);
+
+            data_ = other.data_;
         }
-        DimensionalityStorage<T, M, N>::operator=(other);
-        data_ = other.data_;
+
         return *this;
     }
 
     DataStorage& operator=(DataStorage&& other) noexcept
     {
-        if (referenceCount_ != 0)
+        if (this != &other)
         {
-            LOG_CRITICAL("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
-                         std::to_string(std::stacktrace::current()));
-        }
-        DimensionalityStorage<T, M, N>::operator=(std::move(other));
-        other.DimensionalityStorage<T, M, N>::setRowCount(0);
-        other.DimensionalityStorage<T, M, N>::setColumnCount(0);
-        data_ = std::move(other.data_);
-        return *this;
-    }
+            assert(referenceCount_ == 0 &&
+                   "No matrix views should reference this matrix container before assigning to it");
 
-    ~DataStorage()
-    {
-        if (referenceCount_ != 0)
-        {
-            LOG_CRITICAL("there are ", referenceCount_, " matrix views still pointing to this matrix container\n",
-                         std::to_string(std::stacktrace::current()));
+            DimensionalityStorage<T, M, N>::operator=(other);
+
+            other.DimensionalityStorage<T, M, N>::setRowCount(0);
+            other.DimensionalityStorage<T, M, N>::setColumnCount(0);
+
+            data_ = std::move(other.data_);
+
+            // Matrix views referencing the other matrix are still valid because the implicit this object is the new
+            // owner of the data. The dimensions and data address of the other matrix haven't changed.
+
+            referenceCount_ = other.referenceCount_;
+
+            other.referenceCount_ = 0;
         }
+
+        return *this;
     }
 
     auto& unsafeSubscript(size_type row, size_type column)
