@@ -38,4 +38,15 @@ TEST_CASE("matrix.transpose")
 
         REQUIRE(actual == expected);
     }
+
+    SECTION("implace")
+    {
+        auto matrix = Matrix<int>{{{1, 2}, {3, 4}, {5, 6}}};
+
+        const auto expected = Matrix<int>{{{1, 3, 5}, {2, 4, 6}}};
+
+        matrix = transposed(matrix);
+
+        REQUIRE(matrix == expected);
+    }
 }
