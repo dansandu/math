@@ -21,7 +21,7 @@ public:
 
     DataStorage() : DimensionalityStorage<T, M, N>{M, N}, referenceCount_{0}
     {
-        std::fill(begin(), end(), additiveIdentity<T>);
+        std::fill(begin(), end(), 0);
     }
 
     template<size_type L>

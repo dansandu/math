@@ -24,7 +24,7 @@ public:
     {
         if constexpr (M != dynamic && N != dynamic && M != 0 && N != 0)
         {
-            data_ = std::vector<T>(M * N, additiveIdentity<T>);
+            data_ = std::vector<T>(M * N, 0);
         }
     }
 
