@@ -70,7 +70,7 @@ public:
     {
     }
 
-    MatrixImplementation(size_type rows, size_type columns, const T& fillValue = additiveIdentity<T>)
+    MatrixImplementation(size_type rows, size_type columns, const T& fillValue = 0)
         requires(isContainer(S))
         : dataStorage_{rows, columns, fillValue}
     {
@@ -837,7 +837,7 @@ auto identity(const size_type rows, const size_type columns)
     const auto diagonal = std::min(rows, columns);
     for (auto i = 0; i < diagonal; ++i)
     {
-        result(i, i) = dansandu::math::multiplicativeIdentity<T>;
+        result(i, i) = 1;
     }
     return result;
 }
@@ -855,7 +855,7 @@ auto identity()
     const auto diagonal = std::min(M, N);
     for (auto i = 0; i < diagonal; ++i)
     {
-        result(i, i) = dansandu::math::multiplicativeIdentity<T>;
+        result(i, i) = 1;
     }
     return result;
 }
@@ -886,7 +886,7 @@ auto magnitude(const MatrixImplementation<T, M, N, S>& matrix)
                   matrix.columnCount());
         }
     }
-    auto sum = additiveIdentity<T>;
+    auto sum = static_cast<T>(0);
     for (const auto element : matrix)
     {
         sum += element * element;
@@ -906,12 +906,12 @@ auto normalized(const MatrixImplementation<T, M, N, S>& matrix)
                   matrix.columnCount());
         }
     }
-    auto sum = additiveIdentity<T>;
+    auto sum = static_cast<T>(0);
     for (const auto element : matrix)
     {
         sum += element * element;
     }
-    return matrix * (multiplicativeIdentity<T> / std::sqrt(sum));
+    return matrix * (1 / std::sqrt(sum));
 }
 
 template<typename T, size_type M, size_type N, DataStorageStrategy S, size_type MM, size_type NN,
@@ -927,7 +927,7 @@ auto dotProduct(const MatrixImplementation<T, M, N, S>& a, const MatrixImplement
                   " and ", b.rowCount(), "x", b.columnCount());
         }
     }
-    auto sum = additiveIdentity<T>;
+    auto sum = static_cast<T>(0);
     auto left = a.cbegin();
     auto right = b.cbegin();
     while (left != a.cend())
@@ -950,7 +950,7 @@ auto distance(const MatrixImplementation<T, M, N, S>& a, const MatrixImplementat
                   b.rowCount(), "x", b.columnCount());
         }
     }
-    auto sum = additiveIdentity<T>;
+    auto sum = static_cast<T>(0);
     auto left = a.cbegin();
     auto leftEnd = a.cend();
     auto right = b.cbegin();
